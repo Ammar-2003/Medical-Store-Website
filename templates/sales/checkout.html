@@ -1,0 +1,854 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Receipt Card -->
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-white/20 mb-8 transform transition-all duration-300 hover:shadow-2xl">
+      <!-- Date Header -->
+      <div class="px-8 py-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200/50">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-700 font-medium flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            {{ current_date|date:"d M Y, H:i" }}
+          </span>
+          <button onclick="window.print()" class="text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print Receipt
+          </button>
+        </div>
+      </div>
+
+      <!-- Items List with Bold Header -->
+      <div class="divide-y divide-gray-200/50">
+        <div class="px-8 py-4 grid grid-cols-6 gap-4 font-bold text-white text-sm uppercase tracking-wider bg-black ">
+          <div class="col-span-3">Medicine</div>
+          <div class="text-right">Qty</div>
+          <div class="text-right">Unit Price</div>
+          <div class="text-right">Amount</div>
+        </div>
+        
+  {% for item in cart_items %}
+  <div id="item-{{ item.id }}"
+       class="px-8 py-4 grid grid-cols-6 gap-4 text-gray-700 hover:bg-blue-50/50 transition-colors duration-200 group"
+       data-key="F{{ forloop.counter }}"
+       data-medicine-id="{{ item.medicine.id }}">
+
+    <!-- Column: Name + Icons -->
+    <div class="col-span-3 font-medium flex items-center">
+      
+<!-- Delete Button (fixed) -->
+<button class="remove-item mr-3 text-gray-400 hover:text-red-500 transition-colors duration-200 transform hover:scale-110"
+        data-medicine-id="{{ item.medicine.id }}">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+</button>
+
+<!-- Detail Button -->
+<button class="detail-item mr-3 text-gray-400 hover:text-blue-500 transition-colors duration-200 transform hover:scale-110"
+        data-medicine-id="{{ item.medicine.id }}">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+</button>
+
+      <!-- Index + Medicine Name -->
+      <span class="mr-2 font-bold text-gray-500">#{{ forloop.counter }}</span>
+      <span class="truncate">{{ item.medicine.name }}</span>
+    </div>
+
+    <!-- Quantity -->
+    <div class=" text-gray-600 flex text-right justify-end">
+      <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">{{ item.quantity }}</span>
+    </div>
+
+    <!-- Selling Price -->
+    <div class="text-right flex items-center justify-end">
+      <span class="font-mono">Rs {{ item.medicine.selling_price }}</span>
+    </div>
+
+    <!-- Total -->
+    <div class="text-right font-semibold flex items-center justify-end">
+      <span class="font-mono bg-blue-100/50 px-2 py-1 rounded">Rs {{ item.total }}</span>
+    </div>
+
+  </div>
+{% endfor %}
+      </div>
+
+<!-- Calculation Section -->
+<div class="px-8 py-6 space-y-4 bg-gradient-to-br from-gray-50 to-gray-100 border-t border-gray-200/50">
+  <div class="flex justify-between items-center">
+    <span class="text-gray-700 font-medium flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+      Subtotal
+    </span>
+    <div class="relative w-64">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <span class="text-gray-500 font-mono">Rs</span>
+      </div>
+      <input type="number" name="subtotal" value="{{ subtotal }}" 
+             class="block w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white font-mono hover:border-blue-400 transition-colors duration-200"
+             step="0.01" min="0" id="subtotal-input">
+    </div>
+  </div>
+
+<!-- Discount Input -->
+<div class="flex justify-between items-center">
+    <span class="text-gray-700 font-medium flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Discount
+    </span>
+    <div class="relative w-64">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <span class="text-gray-500 font-mono">-</span>
+      </div>
+      <input type="number" name="discount" value="0" 
+             class="block w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white font-mono hover:border-blue-400 transition-colors duration-200"
+             step="0.01" min="0" id="discount-input">
+    </div>
+</div>
+
+<!-- Adjustment Input -->
+<div class="flex justify-between items-center">
+    <span class="text-gray-700 font-medium flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Adjustment
+    </span>
+    <div class="relative w-64">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <span class="text-gray-500 font-mono">-</span>
+      </div>
+      <input type="number" name="price_deducted" value="0" 
+             class="block w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white font-mono hover:border-blue-400 transition-colors duration-200"
+             step="0.01" min="0" id="deducted-input">
+    </div>
+</div>
+
+  <div class="flex justify-between items-center">
+    <span class="text-gray-700 font-medium flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Extra
+    </span>
+    <div class="relative w-64">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <span class="text-gray-500 font-mono">+</span>
+      </div>
+      <input type="number" name="extra" value="{{ extra }}" 
+             class="block w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white font-mono hover:border-blue-400 transition-colors duration-200"
+             step="0.01" min="0" id="extra-input" pattern="^\d+(\.\d{1,2})?$">
+    </div>
+  </div>
+
+<!-- Total -->
+<div class="flex justify-between items-center pt-4 border-t border-gray-200/70">
+  <span class="text-xl font-bold text-gray-800 flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    Total Amount
+  </span>
+  <div class="relative w-64">
+    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <span class="text-gray-500 font-mono">Rs </span>
+    </div>
+    <input type="number" name="total" value="{{ total }}" 
+           class="block w-full pl-10 pr-4 py-2.5 border rounded-xl shadow-sm bg-blue-50 font-semibold font-mono sm:text-sm border-blue-200"
+           step="0.01" min="0" id="total-input" readonly
+           pattern="^\d+(\.\d{1,2})?$">
+  </div>
+</div>
+
+
+        <!-- Payment Section -->
+        <div class="pt-6 space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-700 font-medium flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Amount Received
+            </span>
+            <div class="relative w-64">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span class="text-gray-500 font-mono">Rs</span>
+              </div>
+              <input type="number" id="amount-given" 
+                     class="block w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white font-mono hover:border-blue-400 transition-colors duration-200"
+                     step="" min="0">
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <span class="text-gray-700 font-medium flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              Balance Due
+            </span>
+            <div class="relative w-64">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span class="text-gray-500 font-mono">Rs</span>
+              </div>
+              <input type="number" id="remaining-amount" readonly
+                     class="block w-full pl-8 pr-4 py-2.5 border rounded-xl shadow-sm bg-blue-50 font-medium sm:text-sm font-mono border-blue-200">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+      <a href="{% url 'home' %}" class="flex-1 px-6 py-4 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 font-bold text-lg rounded-xl hover:opacity-90 transition-opacity duration-200 shadow-md text-center flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        ADD MORE ITEMS
+      </a>
+      <form method="POST" action="{% url 'sales:checkout' %}" class="flex-1">
+        {% csrf_token %}
+        <input type="hidden" name="subtotal" id="final-subtotal">
+        <input type="hidden" name="discount" id="final-discount">
+        <input type="hidden" name="price_deducted" id="final-deducted">
+        <input type="hidden" name="extra" id="final-extra">  <!-- Add this line -->
+        <input type="hidden" name="total" id="final-total">
+        
+        <button id="complete-btn" type="submit" 
+                class="w-full px-6 py-4 bg-black text-white font-bold text-lg rounded-xl hover:opacity-90 transition-opacity duration-200 shadow-lg transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          COMPLETE TRANSACTION
+        </button>
+      </form>
+    </div>
+
+<!-- Medicine Detail Modal -->
+<div id="medicineModal" class="fixed inset-0 z-50 hidden">
+  <!-- Overlay -->
+  <div class="fixed inset-0 bg-black/50" onclick="closeModal()"></div>
+  
+  <!-- Modal container -->
+  <div class="relative min-h-screen flex items-center justify-center p-4">
+    <!-- Scrollable content container -->
+    <div class="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <!-- Content area with ALWAYS-VISIBLE scrollbar -->
+      <div 
+        id="modalContent"
+        class="p-6 overflow-y-scroll flex-1 border-b focus:outline-none"
+        tabindex="0"
+      >
+        <div id="medicineModalContent">
+          <!-- Content will load here -->
+          Loading medicine details...
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="bg-gray-50 px-4 py-3 flex justify-end rounded-b-lg">
+        <button 
+          onclick="closeModal()" 
+          class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmation-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+    
+    <!-- Modal Content -->
+    <div class="relative bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl z-10 transform transition-all">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Remove item from cart?</h3>
+            <div class="mt-4">
+                <p class="text-sm text-gray-500">This will remove the item from your current sale. Are you sure?</p>
+            </div>
+            <div class="mt-5 flex justify-center gap-3">
+                <button data-modal-cancel type="button" class="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cancel
+                </button>
+                <button id="confirm-remove" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Remove
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+  
+// ==============================================
+// MODAL MANAGEMENT
+// ==============================================
+
+const ModalManager = (function() {
+  // Confirmation Modal Elements
+  const confirmationModal = document.getElementById('confirmation-modal');
+  const confirmRemoveBtn = document.getElementById('confirm-remove');
+  const medicineModal = document.getElementById('medicineModal');
+  let currentMedicineId = null;
+
+  function showConfirmationModal(medicineId) {
+    currentMedicineId = medicineId;
+    confirmationModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideConfirmationModal() {
+    confirmationModal.classList.add('hidden');
+    document.body.style.overflow = '';
+    currentMedicineId = null;
+  }
+
+  function showMedicineModal(medicineId) {
+    const content = document.getElementById('medicineModalContent');
+    const scrollable = document.getElementById('modalContent');
+
+    // Show loading state
+    content.innerHTML = '<div class="flex justify-center py-8"><div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div></div>';
+    
+    // Show modal and disable background scrolling
+    medicineModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Ensure scrollable area has proper styling
+    scrollable.style.overflowY = 'auto';
+    scrollable.style.maxHeight = '80vh';
+    
+    // Auto-focus scrollable area
+    setTimeout(() => {
+      scrollable.focus();
+      scrollable.scrollTop = 0;
+    }, 50);
+    
+    // Load actual content
+    fetch(`/medicine/detail/${medicineId}/`)
+      .then(response => response.text())
+      .then(html => {
+        content.innerHTML = html;
+        scrollable.focus();
+        
+        if (content.scrollHeight <= scrollable.clientHeight) {
+          content.style.minHeight = (scrollable.clientHeight + 1) + 'px';
+        }
+      })
+      .catch(error => {
+        content.innerHTML = `
+          <div class="text-red-500 p-4 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Failed to load details. Please try again.
+          </div>
+        `;
+      });
+  }
+
+  function closeMedicineModal() {
+    medicineModal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function setupModalEventListeners() {
+    // Setup delete buttons
+    document.querySelectorAll('.remove-item').forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const medicineId = this.getAttribute('data-medicine-id');
+        showConfirmationModal(medicineId);
+      });
+    });
+
+    // Confirm removal handler
+    confirmRemoveBtn.addEventListener('click', function() {
+      if (!currentMedicineId) {
+        hideConfirmationModal();
+        return;
+      }
+
+      fetch('{% url "sales:cart" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          action: 'remove',
+          medicine_id: currentMedicineId
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Failed to remove item: ' + (data.message || 'Unknown error'));
+          hideConfirmationModal();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Network error occurred');
+        hideConfirmationModal();
+      });
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (!confirmationModal.classList.contains('hidden')) {
+          hideConfirmationModal();
+        } else if (medicineModal && !medicineModal.classList.contains('hidden')) {
+          closeMedicineModal();
+        }
+      }
+    });
+
+    // Close modal when clicking cancel button
+    document.querySelector('#confirmation-modal [data-modal-cancel]').addEventListener('click', hideConfirmationModal);
+  }
+
+  return {
+    init: setupModalEventListeners,
+    showMedicineModal,
+    closeMedicineModal
+  };
+})();
+
+// ==============================================
+// FORM NAVIGATION
+// ==============================================
+
+const FormNavigator = (function() {
+  function setupFormNavigation() {
+    const discountInput = document.getElementById('discount-input');
+    const deductedInput = document.getElementById('deducted-input');
+    const extraInput = document.getElementById('extra-input'); // New
+    const amountInput = document.getElementById('amount-given');
+    const completeBtn = document.getElementById('complete-btn');
+
+    if (discountInput) {
+      discountInput.focus();
+    }
+
+      document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const active = document.activeElement;
+
+      if (active === discountInput) {
+        e.preventDefault();
+        deductedInput.focus();
+      } else if (active === deductedInput) {
+        e.preventDefault();
+        extraInput.focus(); // Focus Extra Amount input next
+      } else if (active === extraInput) {
+        e.preventDefault();
+        amountInput.focus();
+      } else if (active === amountInput) {
+        e.preventDefault();
+        completeBtn.focus();
+      } else if (active === completeBtn) {
+        e.preventDefault();
+        completeBtn.click();
+      }
+    }
+
+      if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        completeBtn.focus();
+      }
+    });
+  }
+
+  return {
+    init: setupFormNavigation
+  };
+})();
+
+// ==============================================
+// MEDICINE KEYBOARD NAVIGATION (FOR POPUPS)
+// ==============================================
+
+const KeyboardNavigator = (function() {
+  let isNavigationMode = false;
+  let currentSelectedIndex = -1;
+  let medicineContainers = [];
+  let isAnyModalOpen = false;
+
+  function checkIfModalIsOpen() {
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const medicineModal = document.getElementById('medicineModal');
+    return (!confirmationModal.classList.contains('hidden') || 
+            !medicineModal.classList.contains('hidden'));
+  }
+
+  function getMedicineContainers() {
+    return Array.from(document.querySelectorAll('div[data-medicine-id]'));
+  }
+
+  function updateSelection() {
+    medicineContainers.forEach(container => {
+      container.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-500');
+    });
+
+    if (currentSelectedIndex >= 0 && currentSelectedIndex < medicineContainers.length) {
+      const selectedContainer = medicineContainers[currentSelectedIndex];
+      selectedContainer.classList.add('bg-blue-100', 'ring-2', 'ring-blue-500');
+      
+      selectedContainer.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }
+
+  function resetNavigationMode() {
+    isNavigationMode = false;
+    currentSelectedIndex = -1;
+    updateSelection();
+  }
+
+  function triggerDeleteModal(medicineId) {
+    const deleteButton = document.querySelector(`.remove-item[data-medicine-id="${medicineId}"]`);
+    if (deleteButton) {
+      const event = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true
+      });
+      deleteButton.dispatchEvent(event);
+    }
+  }
+
+  function triggerRemoveAction() {
+    const confirmRemoveBtn = document.getElementById('confirm-remove');
+    if (confirmRemoveBtn) {
+      confirmRemoveBtn.click();
+    }
+  }
+
+  function redirectToHome() {
+    if (!isAnyModalOpen) {
+      window.location.href = '/';
+    }
+  }
+
+  function handleKeyEvents(event) {
+    // First check if any modal is open
+    isAnyModalOpen = checkIfModalIsOpen();
+    
+    // Handle Delete key in confirmation modal
+    if (event.key === 'Delete' && document.getElementById('confirmation-modal') && 
+        !document.getElementById('confirmation-modal').classList.contains('hidden')) {
+      event.preventDefault();
+      triggerRemoveAction();
+      return;
+    }
+
+    // If any modal is open, let ModalManager handle the Escape key
+    if (isAnyModalOpen && event.key === 'Escape') {
+      return;
+    }
+
+    // Toggle navigation mode with F1
+    if (event.key === 'F1') {
+      event.preventDefault();
+      medicineContainers = getMedicineContainers();
+      
+      if (medicineContainers.length > 0) {
+        isNavigationMode = !isNavigationMode;
+        currentSelectedIndex = isNavigationMode ? 0 : -1;
+        updateSelection();
+      }
+      return;
+    }
+
+    // Handle Delete key - only for deletion
+    if (event.key === 'Delete') {
+      event.preventDefault();
+      if (isNavigationMode) {
+        // In navigation mode - trigger delete for selected medicine
+        if (currentSelectedIndex >= 0 && medicineContainers[currentSelectedIndex]) {
+          const medicineId = medicineContainers[currentSelectedIndex].getAttribute('data-medicine-id');
+          triggerDeleteModal(medicineId);
+        }
+        resetNavigationMode();
+      }
+      // No else case - Delete key only handles deletion
+      return;
+    }
+
+    // Handle Escape key - for navigation and redirection
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      if (isNavigationMode) {
+        // Exit navigation mode on Escape
+        resetNavigationMode();
+      } else if (!isAnyModalOpen) {
+        // Only redirect to home if not in navigation mode and no modals are open
+        redirectToHome();
+      }
+      return;
+    }
+
+    // Only process navigation keys in navigation mode
+    if (!isNavigationMode) return;
+
+    switch (event.key) {
+      case 'ArrowUp':
+        event.preventDefault();
+        if (currentSelectedIndex > 0) {
+          currentSelectedIndex--;
+          updateSelection();
+        }
+        break;
+
+      case 'ArrowDown':
+        event.preventDefault();
+        if (currentSelectedIndex < medicineContainers.length - 1) {
+          currentSelectedIndex++;
+          updateSelection();
+        }
+        break;
+
+      case 'Enter':
+        event.preventDefault();
+        if (currentSelectedIndex >= 0 && medicineContainers[currentSelectedIndex]) {
+          const medicineId = medicineContainers[currentSelectedIndex].getAttribute('data-medicine-id');
+          ModalManager.showMedicineModal(medicineId);
+          resetNavigationMode();
+        }
+        break;
+    }
+  }
+
+  function init() {
+    document.addEventListener('keydown', handleKeyEvents);
+  }
+
+  return {
+    init
+  };
+})();
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  KeyboardNavigator.init();
+});
+
+// ==============================================
+// MAIN INITIALIZATION
+// ==============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  ModalManager.init();
+  FormNavigator.init();
+  KeyboardNavigator.init();
+});
+document.addEventListener('DOMContentLoaded', function () {
+  // Get all input elements
+  const subtotalInput = document.getElementById('subtotal-input');
+  const discountInput = document.getElementById('discount-input');
+  const deductedInput = document.getElementById('deducted-input');
+  const extraInput = document.getElementById('extra-input');
+  const totalInput = document.getElementById('total-input');
+  const amountGivenInput = document.getElementById('amount-given');
+  const remainingInput = document.getElementById('remaining-amount');
+
+  // Hidden form fields
+  const finalSubtotal = document.getElementById('final-subtotal');
+  const finalDiscount = document.getElementById('final-discount');
+  const finalDeducted = document.getElementById('final-deducted');
+  const finalExtra = document.getElementById('final-extra');
+  const finalTotal = document.getElementById('final-total');
+
+  // Initialize discount input as empty
+  discountInput.value = '';
+
+  // Special handling for discount input
+  discountInput.addEventListener('input', function(e) {
+    const input = e.target;
+    let value = input.value;
+    
+    // Handle cases where user types .5 (convert to 0.5)
+    if (value === '.') {
+      input.value = '0.';
+      return;
+    }
+    
+    if (value.startsWith('.') && value.length > 1) {
+      input.value = '0' + value;
+      return;
+    }
+    
+    // Prevent leading zeros without decimal (e.g., 05 becomes 5)
+    if (/^0[0-9]/.test(value) && !value.includes('.')) {
+      input.value = value.replace(/^0+/, '') || '';
+      return;
+    }
+    
+    calculateTotal();
+  });
+
+  // Handle focus to select all text when clicking on input
+  function handleFocus(e) {
+    const input = e.target;
+    input.select();
+  }
+
+  // Format number on blur
+  function handleBlur(e) {
+    const input = e.target;
+    let value = input.value;
+    
+    // If empty, leave it empty (only for discount input)
+    if (input === discountInput && value === "") {
+      return;
+    }
+    // For other inputs, set to 0 if empty
+    else if (value === "") {
+      input.value = "0";
+    }
+    // Handle cases where user left a trailing decimal (e.g., "5.")
+    else if (value.endsWith('.')) {
+      input.value = value + '0';
+    }
+    // Format to 2 decimal places for non-whole numbers
+    else {
+      const num = parseFloat(value);
+      if (isNaN(num)) {
+        input.value = input === discountInput ? "" : "0";
+      } else if (num % 1 === 0) {
+        input.value = num.toString();
+      } else {
+        input.value = num.toFixed(2);
+      }
+    }
+    
+    calculateTotal();
+  }
+
+  // Format number for hidden fields (always 2 decimal places)
+  function formatForSubmission(num) {
+    if (isNaN(num)) return "0.00";
+    return parseFloat(num).toFixed(2);
+  }
+
+  // Attach event listeners to discount and adjustment inputs
+  [discountInput, deductedInput].forEach(input => {
+    input.addEventListener('focus', handleFocus);
+    input.addEventListener('click', handleFocus);
+    input.addEventListener('blur', handleBlur);
+  });
+
+  // Attach event listeners to other inputs
+  [subtotalInput, extraInput, amountGivenInput].forEach(input => {
+    if (input) {
+      input.addEventListener('input', calculateTotal);
+      input.addEventListener('focus', handleFocus);
+      input.addEventListener('click', handleFocus);
+      input.addEventListener('blur', handleBlur);
+    }
+  });
+
+  // Calculate total
+  function calculateTotal() {
+    const subtotal = parseFloat(subtotalInput.value) || 0;
+    const discount = parseFloat(discountInput.value) || 0;
+    const deducted = parseFloat(deductedInput.value) || 0;
+    const extra = parseFloat(extraInput.value) || 0;
+    const amountGiven = parseFloat(amountGivenInput.value) || 0;
+
+    const actualDiscount = Math.min(discount, subtotal);
+    const afterDiscount = subtotal - actualDiscount;
+    const actualDeducted = Math.min(deducted, afterDiscount);
+    const afterDeducted = afterDiscount - actualDeducted;
+
+    // Final total calculation including extra
+    const total = Math.max(0, afterDeducted + extra);
+    const remaining = amountGiven - total;
+
+    // Update visible inputs
+    totalInput.value = total % 1 === 0 ? total.toString() : total.toFixed(2);
+    remainingInput.value = remaining % 1 === 0 ? remaining.toString() : remaining.toFixed(2);
+
+    // Update hidden form fields for submission
+    finalSubtotal.value = formatForSubmission(subtotal);
+    finalDiscount.value = formatForSubmission(actualDiscount);
+    finalDeducted.value = formatForSubmission(actualDeducted);
+    finalExtra.value = formatForSubmission(extra);
+    finalTotal.value = formatForSubmission(total);
+  }
+
+  // Initial calculation
+  calculateTotal();
+});
+</script>
+<style>
+ /* 1. Force scrollbar visibility in all browsers */
+#modalContent {
+  scrollbar-width: thin !important;  /* Firefox */
+  overflow-y: scroll !important;    /* Force scrollbar */
+}
+
+/* 2. Custom scrollbar for Webkit browsers */
+#modalContent::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+#modalContent::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 5px;
+}
+
+#modalContent::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+/* 3. Ensure content can overflow */
+#medicineModalContent {
+  min-height: 101%; /* Forces overflow */
+}
+
+/* Add to your CSS file or style tag */
+.bg-blue-100 {
+  background-color: #dbeafe;
+}
+.ring-2 {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+.ring-blue-500 {
+  --tw-ring-color: #3b82f6;
+}
+</style>
+{% endblock %}

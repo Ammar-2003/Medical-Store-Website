@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Medicine{% endblock %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto">
+
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+        <h1 class="text-2xl font-semibold text-gray-800 mb-6">
+            {% if form.instance.pk %}Edit Medicine{% else %}Add New Medicine{% endif %}
+        </h1>
+          <div class="mt-4 sm:mt-0 flex justify-end">
+  <a href="{% url 'medicine_dashboard' %}" 
+     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-200">
+    Purchase History
+  </a>
+</div>
+        
+<form method="post" class="space-y-4">
+    {% csrf_token %}
+    
+    <!-- Name -->
+    <div>
+        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.name.label }}
+        </label>
+        <input type="text" name="name" id="{{ form.name.id_for_label }}"
+               value="{{ form.name.value|default:'' }}"
+               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+               placeholder="Panadol 500mg">
+        {% if form.name.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <!-- Grid of fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Company -->
+        <div>
+            <label for="{{ form.company.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Company
+            </label>
+            <input type="text" name="company" id="{{ form.company.id_for_label }}"
+                   value="{{ form.company.value|default:'' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            {% if form.company.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.company.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Formula -->
+        <div>
+            <label for="{{ form.formula.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                {{ form.formula.label }}
+            </label>
+            <input type="text"
+                   name="formula"
+                   id="{{ form.formula.id_for_label }}"
+                   value="{{ form.formula.value|default_if_none:'' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                   placeholder="C8H9NO2">
+            {% if form.formula.errors %}
+            <div class="mt-1 text-sm text-red-600">
+                {% for error in form.formula.errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>  
+
+        <!-- Batch No -->
+        <div>
+            <label for="{{ form.batch_no.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Batch No
+            </label>
+            <div class="relative rounded-md shadow-sm">
+                <input type="text" name="batch_no" id="{{ form.batch_no.id_for_label }}"
+                       value="{{ form.batch_no.value|default:'' }}"
+                       class="block w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                       placeholder="Enter batch number">
+            </div>
+            {% if form.batch_no.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.batch_no.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Retailers Price -->
+        <div>
+            <label for="{{ form.retailers_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Purchase Price (Rs)
+            </label>
+            <div class="relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">Rs</span>
+                </div>
+                <input type="number" name="retailers_price" id="{{ form.retailers_price.id_for_label }}"
+                       value="{{ form.retailers_price.value|default:'' }}"
+                       step="0.01" min="0"
+                       class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            {% if form.retailers_price.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.retailers_price.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Packet Price -->
+        <div>
+            <label for="{{ form.packet_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Selling Price per Packet (Rs)
+            </label>
+            <div class="relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">Rs</span>
+                </div>
+                <input type="number" name="packet_price" id="{{ form.packet_price.id_for_label }}"
+                       value="{{ form.packet_price.value|default:'' }}"
+                       step="0.01" min="0"
+                       class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            {% if form.packet_price.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.packet_price.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Units per Box -->
+        <div>
+            <label for="{{ form.units_per_box.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Units per Packet
+            </label>
+            <input type="number" name="units_per_box" id="{{ form.units_per_box.id_for_label }}"
+                   value="{{ form.units_per_box.value|default:'' }}"
+                   min="1"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            {% if form.units_per_box.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.units_per_box.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Rack Number -->
+        <div>
+            <label for="{{ form.rack_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Rack Number
+            </label>
+            <input type="text" name="rack_number" id="{{ form.rack_number.id_for_label }}"
+                   value="{{ form.rack_number.value|default:'' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            {% if form.rack_number.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.rack_number.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Expiry Date -->
+        <div>
+            <label for="{{ form.expiry_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Expiry Date
+            </label>
+            <input type="date" name="expiry_date" id="{{ form.expiry_date.id_for_label }}"
+                   value="{{ form.expiry_date.value|default:''|date:'Y-m-d' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            {% if form.expiry_date.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.expiry_date.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Discount Type -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
+            <div class="flex rounded-md shadow-sm">
+                <label class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-l-md bg-white text-sm font-medium {% if form.discount_type.value != 'flat' %}bg-blue-50 border-blue-500 text-blue-600{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                    <input type="radio" name="discount_type" value="percent" class="sr-only" {% if form.discount_type.value != 'flat' %}checked{% endif %}>
+                    Per (%)
+                </label>
+                <label class="inline-flex items-center px-3 py-2 border-t border-b border-r border-gray-300 rounded-r-md bg-white text-sm font-medium {% if form.discount_type.value == 'flat' %}bg-blue-50 border-blue-500 text-blue-600{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                    <input type="radio" name="discount_type" value="flat" class="sr-only" {% if form.discount_type.value == 'flat' %}checked{% endif %}>
+                    RS (Rs)
+                </label>
+            </div>
+        </div>
+
+        <!-- Discount Value -->
+        <div>
+            <label for="{{ form.discount.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Discount Value
+            </label>
+            <div class="relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">
+                        {% if form.discount_type.value == 'flat' %}Rs{% else %}%{% endif %}
+                    </span>
+                </div>
+                <input type="number" name="discount" id="{{ form.discount.id_for_label }}"
+                       value="{{ form.discount.value|default:'' }}"
+                       step="0.01" min="0"
+                       class="block w-full pl-8 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            {% if form.discount.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.discount.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Current Stock (readonly) -->
+        <div>
+            <label for="current_stock" class="block text-sm font-medium text-gray-700 mb-1">
+                Current Stock
+            </label>
+            <input type="number" id="current_stock"
+                   value="{{ form.instance.stock }}"
+                   readonly
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        </div>
+
+        <!-- Additional Stock -->
+        <div>
+            <label for="{{ form.additional_stock.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Additional Stock Quantity
+            </label>
+            <input type="number" name="additional_stock" id="{{ form.additional_stock.id_for_label }}"
+                   value="{{ form.additional_stock.value|default:'0' }}"
+                   min="0"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                   placeholder="Enter amount to add">
+            {% if form.additional_stock.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.additional_stock.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Future Stock Preview (calculated) -->
+        <div>
+            <label for="future_stock" class="block text-sm font-medium text-gray-700 mb-1">
+                Future Stock (Preview)
+            </label>
+            <input type="number" id="future_stock"
+                   value="{{ form.instance.stock|add:form.additional_stock.value|default:form.instance.stock }}"
+                   readonly
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md bg-blue-50 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        </div>
+
+        <!-- Purchase Note -->
+        <div>
+            <label for="{{ form.purchase_note.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Purchase Note (Optional)
+            </label>
+            <input type="text" name="purchase_note" id="{{ form.purchase_note.id_for_label }}"
+                   value="{{ form.purchase_note.value|default:'' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                   placeholder="e.g., Additional stock purchase">
+        </div>
+    </div>
+    
+    <!-- Form Actions -->
+    <div class="pt-4 flex justify-end space-x-3">
+        <a href="{% url 'home' %}" class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+            Cancel
+        </a>
+        <button type="submit" class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+            Update Medicine
+        </button>
+    </div>
+</form>
+    </div>
+</div>
+
+
+
+
+<script>
+  // Optional: You can add JavaScript to calculate the price in real-time as the user types
+document.addEventListener('DOMContentLoaded', function() {
+    const packetPriceInput = document.querySelector('input[name="packet_price"]');
+    const unitsPerBoxInput = document.querySelector('input[name="units_per_box"]');
+    const priceDisplay = document.getElementById('price');
+    
+    function calculatePrice() {
+        if (packetPriceInput.value && unitsPerBoxInput.value) {
+            const packetPrice = parseFloat(packetPriceInput.value);
+            const unitsPerBox = parseInt(unitsPerBoxInput.value);
+            if (unitsPerBox > 0) {
+                const unitPrice = packetPrice / unitsPerBox;
+                priceDisplay.value = unitPrice.toFixed(2);
+            }
+        }
+    }
+    
+    if (packetPriceInput && unitsPerBoxInput && priceDisplay) {
+        packetPriceInput.addEventListener('input', calculatePrice);
+        unitsPerBoxInput.addEventListener('input', calculatePrice);
+    }
+});
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle discount type toggle
+    const discountTypeRadios = document.querySelectorAll('input[name="discount_type"]');
+    const discountInput = document.querySelector('input[name="discount"]');
+    const discountContainer = discountInput.parentElement;
+    const discountSymbol = discountContainer.querySelector('.absolute span');
+    const discountHint = document.querySelector('.text-xs.text-gray-500');
+    
+    function updateDiscountDisplay() {
+        const selectedType = document.querySelector('input[name="discount_type"]:checked').value;
+        
+        // Update the symbol
+        discountSymbol.textContent = selectedType === 'flat' ? '₹' : '%';
+                
+        // Update radio button styles
+        document.querySelectorAll('input[name="discount_type"]').forEach((radio, index) => {
+            const label = radio.parentElement;
+            if (radio.checked) {
+                label.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-600');
+                label.classList.remove('text-gray-700', 'hover:bg-gray-50');
+            } else {
+                label.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-600');
+                label.classList.add('text-gray-700', 'hover:bg-gray-50');
+            }
+        });
+    }
+    
+    discountTypeRadios.forEach(radio => {
+        radio.addEventListener('change', updateDiscountDisplay);
+    });
+    
+    // Initialize display
+    updateDiscountDisplay();
+});
+
+// JavaScript to update the future stock preview in real-time
+document.addEventListener('DOMContentLoaded', function() {
+    const additionalStockInput = document.getElementById('{{ form.additional_stock.id_for_label }}');
+    const currentStockInput = document.getElementById('current_stock');
+    const futureStockInput = document.getElementById('future_stock');
+    
+    if (additionalStockInput && currentStockInput && futureStockInput) {
+        additionalStockInput.addEventListener('input', function() {
+            const currentStock = parseInt(currentStockInput.value) || 0;
+            const additionalStock = parseInt(additionalStockInput.value) || 0;
+            futureStockInput.value = currentStock + additionalStock;
+        });
+    }
+});
+
+</script>
+{% endblock %}

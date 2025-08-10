@@ -1,0 +1,688 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Medicine{% endblock %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto">
+
+    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+        <h1 class="text-2xl font-semibold text-gray-800 mb-6">
+            {% if form.instance.pk %}Edit Medicine{% else %}Add New Medicine{% endif %}
+        </h1>
+          <div class="mt-4 sm:mt-0 flex justify-end">
+  <a href="{% url 'medicine_dashboard' %}" 
+     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-200">
+    Purchase History
+  </a>
+</div>
+        
+<form method="post" class="space-y-4">
+    {% csrf_token %}
+    
+    <!-- Name -->
+    <div>
+        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.name.label }}
+        </label>
+        <input type="text" name="name" id="{{ form.name.id_for_label }}"
+               value="{{ form.name.value|default:'' }}"
+               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+               placeholder="Panadol 500mg">
+        {% if form.name.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <!-- Grid of fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Company -->
+        <div>
+            <label for="{{ form.company.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Company
+            </label>
+            <input type="text" name="company" id="{{ form.company.id_for_label }}"
+                   value="{{ form.company.value|default:'' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            {% if form.company.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.company.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Formula -->
+        <div>
+            <label for="{{ form.formula.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                {{ form.formula.label }}
+            </label>
+            <input type="text"
+                   name="formula"
+                   id="{{ form.formula.id_for_label }}"
+                   value="{{ form.formula.value|default_if_none:'' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                   placeholder="C8H9NO2">
+            {% if form.formula.errors %}
+            <div class="mt-1 text-sm text-red-600">
+                {% for error in form.formula.errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>  
+
+        <!-- Batch No -->
+        <div>
+            <label for="{{ form.batch_no.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Batch No
+            </label>
+            <div class="relative rounded-md shadow-sm">
+                <input type="text" name="batch_no" id="{{ form.batch_no.id_for_label }}"
+                       value="{{ form.batch_no.value|default:'' }}"
+                       class="block w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                       placeholder="Enter batch number">
+            </div>
+            {% if form.batch_no.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.batch_no.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Retailers Price -->
+        <div>
+            <label for="{{ form.retailers_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Purchase Price (Rs)
+            </label>
+            <div class="relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">Rs</span>
+                </div>
+                <input type="number" name="retailers_price" id="{{ form.retailers_price.id_for_label }}"
+                       value="{{ form.retailers_price.value|default:'' }}"
+                       step="0.01" min="0"
+                       class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            {% if form.retailers_price.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.retailers_price.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Packet Price -->
+        <div>
+            <label for="{{ form.packet_price.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Selling Price per Packet (Rs)
+            </label>
+            <div class="relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">Rs</span>
+                </div>
+                <input type="number" name="packet_price" id="{{ form.packet_price.id_for_label }}"
+                       value="{{ form.packet_price.value|default:'' }}"
+                       step="0.01" min="0"
+                       class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            {% if form.packet_price.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.packet_price.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Units per Box -->
+        <div>
+            <label for="{{ form.units_per_box.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Units per Packet
+            </label>
+            <input type="number" name="units_per_box" id="{{ form.units_per_box.id_for_label }}"
+                   value="{{ form.units_per_box.value|default:'' }}"
+                   min="1"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            {% if form.units_per_box.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.units_per_box.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Rack Number -->
+        <div>
+            <label for="{{ form.rack_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Rack Number
+            </label>
+            <input type="text" name="rack_number" id="{{ form.rack_number.id_for_label }}"
+                   value="{{ form.rack_number.value|default:'' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            {% if form.rack_number.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.rack_number.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Expiry Date -->
+        <div>
+            <label for="{{ form.expiry_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Expiry Date
+            </label>
+            <input type="date" name="expiry_date" id="{{ form.expiry_date.id_for_label }}"
+                   value="{{ form.expiry_date.value|default:''|date:'Y-m-d' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            {% if form.expiry_date.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.expiry_date.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Discount Type -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
+            <div class="flex rounded-md shadow-sm">
+                <label class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-l-md bg-white text-sm font-medium {% if form.discount_type.value != 'flat' %}bg-blue-50 border-blue-500 text-blue-600{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                    <input type="radio" name="discount_type" value="percent" class="sr-only" {% if form.discount_type.value != 'flat' %}checked{% endif %}>
+                    Per (%)
+                </label>
+                <label class="inline-flex items-center px-3 py-2 border-t border-b border-r border-gray-300 rounded-r-md bg-white text-sm font-medium {% if form.discount_type.value == 'flat' %}bg-blue-50 border-blue-500 text-blue-600{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                    <input type="radio" name="discount_type" value="flat" class="sr-only" {% if form.discount_type.value == 'flat' %}checked{% endif %}>
+                    RS (Rs)
+                </label>
+            </div>
+        </div>
+
+        <!-- Discount Value -->
+        <div>
+            <label for="{{ form.discount.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Discount Value
+            </label>
+            <div class="relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">
+                        {% if form.discount_type.value == 'flat' %}Rs{% else %}%{% endif %}
+                    </span>
+                </div>
+                <input type="number" name="discount" id="{{ form.discount.id_for_label }}"
+                       value="{{ form.discount.value|default:'' }}"
+                       step="0.01" min="0"
+                       class="block w-full pl-8 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            {% if form.discount.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.discount.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Initial Stock (required for new medicine) -->
+        <div>
+            <label for="{{ form.initial_stock.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Initial Stock Quantity
+            </label>
+            <input type="number" name="initial_stock" id="{{ form.initial_stock.id_for_label }}"
+                   value="{{ form.initial_stock.value|default:'1' }}"
+                   min="1"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                   placeholder="Enter initial stock amount">
+            {% if form.initial_stock.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.initial_stock.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Purchase Note -->
+        <div>
+            <label for="{{ form.purchase_note.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                Purchase Note (Optional)
+            </label>
+            <input type="text" name="purchase_note" id="{{ form.purchase_note.id_for_label }}"
+                   value="{{ form.purchase_note.value|default:'' }}"
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                   placeholder="e.g., Initial stock purchase">
+        </div>
+    </div>
+    
+    <!-- Form Actions -->
+    <div class="pt-4 flex justify-end space-x-3">
+        <a href="{% url 'home' %}" class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+            Cancel
+        </a>
+        <button type="submit" class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+            Add Medicine
+        </button>
+    </div>
+</form>
+    </div>
+</div>
+<hr class="border-gray-300 mt-8">
+
+<!--  Medicine List -->
+
+<div class="min-h-screen bg-gray-50 p-4 sm:p-6">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Medicine Inventory</h1>
+        <p class="text-gray-500 mt-1">Manage your pharmacy stock efficiently</p>
+      </div>
+    </div>
+
+        <!-- Enhanced Search Card -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+  <div class="p-4 sm:p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Enhanced Search Box -->
+      <div class="relative" id="search-container">
+        <form method="GET" action="{% url 'medicine' %}" id="search-form" class="w-full">
+          <div class="relative flex">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <input 
+              type="text"
+              name="search_query"
+              id="medicine-search"
+              value="{{ request.GET.search_query }}"
+              class="block w-full pl-10 pr-12 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+              placeholder="Search by name or ID..." 
+              autocomplete="off">
+            <button type="button" id="clear-search" class="absolute inset-y-0 right-0 px-4 text-sm font-medium text-blue-600 hover:text-blue-700">
+              Clear
+            </button>
+          </div>
+        </form>
+        
+        <!-- Suggestions Dropdown -->
+        <div id="suggestions-dropdown" class="hidden absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
+          <div id="suggestions-list" class="divide-y divide-gray-100"></div>
+          <div id="no-results" class="hidden px-4 py-3 text-gray-500 italic">
+            No medicines found
+          </div>
+        </div>
+      </div>
+
+<!-- Filters Section - Updated to show both filters side by side -->
+<div class="flex items-center justify-end space-x-4">
+  <label class="inline-flex items-center cursor-pointer">
+    <input type="checkbox" id="show-expiring" class="sr-only peer">
+    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+    <span class="ms-3 text-sm font-medium text-gray-700">Expiring Soon</span>
+  </label>
+  
+  <label class="inline-flex items-center cursor-pointer">
+    <input type="checkbox" id="show-expired" class="sr-only peer">
+    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+    <span class="ms-3 text-sm font-medium text-gray-700">Expired</span>
+  </label>
+  
+  <label class="inline-flex items-center cursor-pointer">
+    <input type="checkbox" id="show-out-of-stock" class="sr-only peer">
+    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+    <span class="ms-3 text-sm font-medium text-gray-700">Out of Stock</span>
+  </label>
+</div>
+  </div>
+</div>
+
+    <!-- Medicine Table Card -->
+    <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Selling Price</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rack</th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for medicine in medicines %}
+            <tr class="hover:bg-gray-50 transition-colors duration-150" data-expiry="{{ medicine.expiry_date|date:'Y-m-d' }}" data-stock="{{ medicine.stock }}">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ medicine.id }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900">{{ medicine.name }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ medicine.company }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">Rs {{ medicine.price }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ medicine.get_discount_display }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">Rs {{ medicine.selling_price|floatformat:2 }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                  {% if medicine.stock < 10 %}bg-red-100 text-red-800
+                  {% elif medicine.stock < 50 %}bg-yellow-100 text-yellow-800
+                  {% else %}bg-green-100 text-green-800{% endif %}">
+                  {{ medicine.stock }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <span class="text-sm {% if medicine.is_expired %}text-red-600 font-medium{% elif medicine.is_expiring_soon %}text-yellow-600{% else %}text-gray-500{% endif %}">
+                    {{ medicine.expiry_date|date:"d M Y" }}
+                  </span>
+                  {% if medicine.is_expired %}
+                  <span class="ml-1.5 flex items-center text-red-500" title="Expired">
+                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                  </span>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ medicine.rack_number }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="flex justify-end space-x-2">
+                  <a href="{% url 'update_medecine' medicine.id %}" class="text-blue-600 hover:text-blue-900 p-1.5 rounded-lg hover:bg-blue-50 transition-colors duration-200" title="Edit">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </a>
+                  <button class="text-red-600 hover:text-red-900 p-1.5 rounded-lg hover:bg-red-50 transition-colors duration-200 delete-btn" 
+                          data-id="{{ medicine.id }}"
+                          data-name="{{ medicine.name }}"
+                          title="Delete">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="10" class="px-6 py-12 text-center text-gray-500">
+                <div class="flex flex-col items-center justify-center">
+                  <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <h3 class="mt-2 text-sm font-medium text-gray-900">No medicines found</h3>
+                  <p class="mt-1 text-sm text-gray-500">Add your first medicine to get started</p>
+                  <div class="mt-6">
+                    <a href="{% url 'medicine' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                      <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                      </svg>
+                      Add Medicine
+                    </a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <!-- Background overlay -->
+  <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+  
+  <!-- Modal content -->
+  <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md">
+    <div class="p-6">
+      <div class="flex items-start">
+        <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+          <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <h3 class="text-lg font-medium text-gray-900" id="modal-title">Delete Medicine</h3>
+          <div class="mt-2">
+            <p class="text-sm text-gray-500">Are you sure you want to delete <strong id="medicine-to-delete" class="font-medium"></strong>? This action cannot be undone.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+      <form id="delete-form" method="POST" action="">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+          Delete
+        </button>
+      </form>
+      <button type="button" id="cancel-delete" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Optional: You can add JavaScript to calculate the price in real-time as the user types
+document.addEventListener('DOMContentLoaded', function() {
+    const packetPriceInput = document.querySelector('input[name="packet_price"]');
+    const unitsPerBoxInput = document.querySelector('input[name="units_per_box"]');
+    const priceDisplay = document.getElementById('price');
+    
+    function calculatePrice() {
+        if (packetPriceInput.value && unitsPerBoxInput.value) {
+            const packetPrice = parseFloat(packetPriceInput.value);
+            const unitsPerBox = parseInt(unitsPerBoxInput.value);
+            if (unitsPerBox > 0) {
+                const unitPrice = packetPrice / unitsPerBox;
+                priceDisplay.value = unitPrice.toFixed(2);
+            }
+        }
+    }
+    
+    if (packetPriceInput && unitsPerBoxInput && priceDisplay) {
+        packetPriceInput.addEventListener('input', calculatePrice);
+        unitsPerBoxInput.addEventListener('input', calculatePrice);
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Delete modal handling - improved version
+  const deleteButtons = document.querySelectorAll('.delete-btn');
+  const deleteModal = document.getElementById('deleteModal');
+  const medicineToDelete = document.getElementById('medicine-to-delete');
+  const deleteForm = document.getElementById('delete-form');
+  const cancelDelete = document.getElementById('cancel-delete');
+
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault(); // Prevent any default behavior
+      e.stopPropagation(); // Stop event bubbling
+      
+      const medicineId = this.getAttribute('data-id');
+      const medicineName = this.getAttribute('data-name');
+      const deleteUrl = "{% url 'delete_medicine' 0 %}".replace('0', medicineId);
+      
+      medicineToDelete.textContent = medicineName;
+      deleteForm.setAttribute('action', deleteUrl);
+      
+      // Make absolutely sure modal is shown
+      deleteModal.classList.remove('hidden');
+      deleteModal.style.display = 'flex'; // Force display
+      document.body.classList.add('overflow-hidden'); // Prevent scrolling
+    });
+  });
+
+  cancelDelete.addEventListener('click', function() {
+    deleteModal.classList.add('hidden');
+    deleteModal.style.display = 'none';
+    document.body.classList.remove('overflow-hidden');
+  });
+
+  // Close modal when clicking outside
+  deleteModal.addEventListener('click', function(e) {
+    if (e.target === deleteModal) {
+      deleteModal.classList.add('hidden');
+      deleteModal.style.display = 'none';
+      document.body.classList.remove('overflow-hidden');
+    }
+  });
+});
+
+// Search and Filter Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('medicine-search');
+    const clearSearch = document.getElementById('clear-search');
+    const searchForm = document.getElementById('search-form');
+    const showExpiring = document.getElementById('show-expiring');
+    const showExpired = document.getElementById('show-expired');
+    const showOutOfStock = document.getElementById('show-out-of-stock');
+    const medicineRows = document.querySelectorAll('tbody tr[data-expiry]');
+    const emptyRow = document.querySelector('tbody tr:not([data-expiry])');
+    
+    // Debounce function to limit filtering operations
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this, args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
+    
+    // Check if any filter is active
+    function isAnyFilterActive() {
+        return showExpiring.checked || showExpired.checked || showOutOfStock.checked;
+    }
+    
+    // Filter the medicine table based on search query and active filters
+    function filterTable(query) {
+        const searchTerm = query.toLowerCase();
+        let hasVisibleRows = false;
+        
+        medicineRows.forEach(row => {
+            const medicineName = row.querySelector('td:nth-child(2) .text-sm.font-medium').textContent.toLowerCase();
+            const medicineId = row.querySelector('td:first-child').textContent.toLowerCase();
+            const companyName = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+            const expiryCell = row.querySelector('td:nth-child(8)');
+            const stock = parseInt(row.getAttribute('data-stock')) || 0;
+            
+            // Check if matches search term
+            const matchesSearch = medicineName.includes(searchTerm) || 
+                                medicineId.includes(searchTerm) || 
+                                companyName.includes(searchTerm);
+            
+            // Check filter conditions
+            let matchesFilters = true;
+            
+            if (isAnyFilterActive()) {
+                matchesFilters = false;
+                
+                // Check expiring filter
+                if (showExpiring.checked) {
+                    const isExpiringSoon = expiryCell.querySelector('span.text-yellow-600') !== null;
+                    const isExpired = expiryCell.querySelector('span.text-red-600') !== null;
+                    if (isExpiringSoon && !isExpired) {
+                        matchesFilters = true;
+                    }
+                }
+                
+                // Check expired filter
+                if (showExpired.checked) {
+                    const isExpired = expiryCell.querySelector('span.text-red-600') !== null;
+                    if (isExpired) {
+                        matchesFilters = true;
+                    }
+                }
+                
+                // Check out of stock filter
+                if (showOutOfStock.checked) {
+                    const isOutOfStock = stock <= 0;
+                    if (isOutOfStock) {
+                        matchesFilters = true;
+                    }
+                }
+            }
+            
+            // Show/hide row based on both search and filters
+            if (matchesSearch && matchesFilters) {
+                row.style.display = '';
+                hasVisibleRows = true;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Show/hide empty state
+        if (emptyRow) {
+            emptyRow.style.display = hasVisibleRows ? 'none' : '';
+        }
+    }
+    
+    // Handle search input
+    searchInput.addEventListener('input', debounce(function() {
+        const query = this.value.trim();
+        filterTable(query);
+    }, 300));
+    
+    // Handle form submission
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        filterTable(query);
+    });
+    
+    // Clear search
+    clearSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        filterTable('');
+        searchInput.focus();
+    });
+    
+    // Handle filter changes
+    [showExpiring, showExpired, showOutOfStock].forEach(filter => {
+        filter.addEventListener('change', function() {
+            const query = searchInput.value.trim();
+            filterTable(query);
+        });
+    });
+    
+    // Initialize with any existing search query
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('search_query');
+    if (searchQuery) {
+        searchInput.value = searchQuery;
+        filterTable(searchQuery);
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const newStockInput = document.getElementById('{{ form.new_stock.id_for_label }}');
+    const currentStock = parseInt(document.getElementById('current_stock').value) || 0;
+    const futureStockPreview = document.getElementById('future_stock');
+
+    if (newStockInput && futureStockPreview) {
+        newStockInput.addEventListener('input', function() {
+            const newStockValue = parseInt(this.value) || 0;
+            futureStockPreview.value = currentStock + newStockValue;
+        });
+    }
+});
+</script>
+
+<style>
+/* Add this to your styles */
+#suggestions-dropdown {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.suggestion-item {
+    padding: 0.5rem 1rem;
+    transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+    background-color: #f9fafb;
+}
+
+.suggestion-item:focus {
+    outline: none;
+    background-color: #f3f4f6;
+}
+</style>
+{% endblock %}

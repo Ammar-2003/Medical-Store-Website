@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hanan Medical Store{% endblock %}</title>
+    <link href="{% static 'css/main.css' %}" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
+</head>
+<body class="bg-gray-50">
+    {% include 'includes/message.html' %}
+    <!-- Modern Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo and Store Name -->
+                <div class="flex items-center space-x-2">
+                    <div class="flex-shrink-0 md:hidden">
+                        <div class="bg-gradient-to-r from-primary-600 to-secondary-600 p-2 rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="">
+<h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-amber-600 bg-clip-text text-transparent">
+    Hanan Medical Store
+</h1>
+                        <p class="text-md text-black ml-2">03121683846</p>
+                    </div>
+                </div>
+                
+                <!-- Centered Desktop Navigation -->
+                <div class="hidden md:flex flex-1 justify-center">
+                    <div class="flex items-center space-x-1">
+                        <a href="{% url 'home' %}" 
+                           class="{% if request.resolver_match.url_name == 'home' %}bg-gray-100 text-primary-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %} px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center">
+                           <i class="fas fa-home mr-2"></i> Home
+                        </a>
+                        <a href="{% url 'medicine' %}" 
+                           class="{% if request.resolver_match.url_name == 'medicine' %}bg-gray-100 text-primary-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %} px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center">
+                           <i class="fas fa-pills mr-2"></i> Inventory
+                        </a>
+                        <a href="{% url 'sales:dashboard' %}" 
+                           class="{% if request.resolver_match.url_name == 'sales' %}bg-gray-100 text-primary-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %} px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center">
+                           <i class="fas fa-shopping-cart mr-2"></i> Sales
+                        </a>
+                        <a href="{% url 'sales:report' %}" 
+                           class="{% if request.resolver_match.url_name == 'report' %}bg-gray-100 text-primary-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %} px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center">
+                           <i class="fas fa-chart-line mr-2"></i> Reports
+                        </a>
+                    </div>
+                </div>
+                
+<!-- Right side - Stylish Return Button -->
+<div class="flex-shrink-0">
+    <a href="{% url 'sales:return' %}" 
+       class="hidden md:inline-flex items-center gap-2 bg-black text-white border-2 border-transparent hover:bg-white hover:text-black hover:border-black px-3 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-300 ease-in-out">
+        <span class="leading-none">Return</span>
+        <i class="fas fa-circle-chevron-right text-base leading-none mt-[.5px]"></i>
+    </a>
+</div>
+
+
+
+
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition-all duration-200" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation -->
+        <div class="md:hidden hidden origin-top animate-fade" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}bg-gray-100 text-primary-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %}  px-3 py-2 rounded-md text-base font-medium flex items-center">
+                    <i class="fas fa-home mr-3"></i> Home
+                </a>
+                <a href="{% url 'medicine' %}" class="{% if request.resolver_match.url_name == 'medicine' %}bg-gray-100 text-primary-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %}  px-3 py-2 rounded-md text-base font-medium flex items-center">
+                    <i class="fas fa-pills mr-3"></i> Inventory
+                </a>
+                <a href="{% url 'sales:dashboard' %}" class="{% if request.resolver_match.url_name == 'sales' %}bg-gray-100 text-primary-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %}  px-3 py-2 rounded-md text-base font-medium flex items-center">
+                    <i class="fas fa-shopping-cart mr-3"></i> Sales
+                </a>
+                <a href="{% url 'sales:report' %}" class="{% if request.resolver_match.url_name == 'report' %}bg-gray-100 text-primary-600{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %}  px-3 py-2 rounded-md text-base font-medium flex items-center">
+                    <i class="fas fa-chart-line mr-3"></i> Reports
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+<script>
+    // Mobile menu toggle (unchanged)
+    document.querySelector('[aria-controls="mobile-menu"]')?.addEventListener('click', function() {
+        const menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+        menu.classList.toggle('animate-fade');
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const menu = document.getElementById('mobile-menu');
+        const menuButton = document.querySelector('[aria-controls="mobile-menu"]');
+        
+        if (!menu.classList.contains('hidden') && 
+            !menu.contains(event.target) && 
+            !menuButton.contains(event.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    // **ULTRA-SMOOTH SCROLLING SYSTEM**
+    document.addEventListener('DOMContentLoaded', function() {
+        const scrollableTables = document.querySelectorAll('.overflow-x-auto');
+        let isScrolling = false;
+
+        document.addEventListener('keydown', function(e) {
+            // Ignore if typing in inputs/textarea
+            const focusedElement = document.activeElement;
+            if (focusedElement?.matches('input, textarea')) return;
+
+            // Only handle arrow keys
+            if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+            e.preventDefault();
+
+            // Prevent animation stacking
+            if (isScrolling) return;
+            isScrolling = true;
+
+            // **Smooth Page Scrolling (Up/Down)**
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                const scrollAmount = window.innerHeight * 0.75; // 75% of viewport
+                window.scrollBy({
+                    top: e.key === 'ArrowUp' ? -scrollAmount : scrollAmount,
+                    behavior: 'smooth'
+                });
+            } 
+            // **Silky Table Scrolling (Left/Right)**
+            else if (scrollableTables.length > 0) {
+                scrollableTables.forEach(table => {
+                    const scrollAmount = table.clientWidth * 0.75; // 75% of table width
+                    table.scrollBy({
+                        left: e.key === 'ArrowLeft' ? -scrollAmount : scrollAmount,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+
+            // Reset scroll lock after animation
+            setTimeout(() => isScrolling = false, 500);
+        });
+    });
+</script>
+</body>
+</html>

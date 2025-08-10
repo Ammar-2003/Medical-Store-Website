@@ -1,0 +1,29 @@
+<div id="suggestions-dropdown" class="hidden absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg">
+    <div id="suggestions-list" class="max-h-96 overflow-y-auto py-1">
+        {% if medicines %}
+            {% for medicine in medicines %}
+            <a href="{% url 'home' %}?search_query={{ medicine.name|urlencode }}" 
+               class="suggestion-item block border-b border-gray-100 last:border-0">
+                <div class="flex justify-between items-center p-3 hover:bg-gray-50">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium truncate">{{ medicine.name }}</div>
+                        <div class="text-sm text-gray-500 truncate">
+                            {{ medicine.company }} • 
+                            <span class="{% if medicine.stock > 10 %}text-green-500{% else %}text-yellow-500{% endif %}">
+                                {{ medicine.stock }} in stock
+                            </span>
+                            {% if medicine.rack_number %} • Rack: {{ medicine.rack_number }}{% endif %}
+                        </div>
+                    </div>
+                    <div class="ml-4 text-right whitespace-nowrap">
+                        <div class="text-gray-400 line-through text-sm">₹{{ medicine.price|floatformat:2 }}</div>
+                        <div class="font-medium text-blue-600">₹{{ medicine.selling_price|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="p-3 text-gray-500 italic">No matches found</div>
+        {% endif %}
+    </div>
+</div>

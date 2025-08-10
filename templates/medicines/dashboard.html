@@ -1,0 +1,347 @@
+<!-- medicines/dashboard.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Medicine Inventory Dashboard</h1>
+            <p class="text-gray-600 mt-1">Track purchases, stock levels, and inventory value</p>
+        </div>
+        <div class="mt-3 md:mt-0">
+            <a href="{% url 'medicine' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors duration-150">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                New Purchase
+            </a>
+        </div>
+    </div>
+    
+    <!-- Summary Cards - Strictly Horizontal -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+        <!-- All Time Total -->
+        <div class="flex-1 bg-white rounded-lg border border-gray-200 p-4 shadow-xs">
+            <div class="flex items-center">
+                <div class="p-2 rounded-lg bg-blue-50 text-blue-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-gray-500">Total Inventory Value</h3>
+                    <p class="text-xl font-semibold text-gray-800">Rs {{ current_inventory_value|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- All Time Total -->
+        <div class="flex-1 bg-white rounded-lg border border-gray-200 p-4 shadow-xs">
+            <div class="flex items-center">
+                <div class="p-2 rounded-lg bg-blue-50 text-blue-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-gray-500">Total Purchase</h3>
+                    <p class="text-xl font-semibold text-gray-800">Rs {{ all_time_total|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtered Period Total -->
+        <div class="flex-1 bg-white rounded-lg border border-gray-200 p-4 shadow-xs">
+            <div class="flex items-center">
+                <div class="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-gray-500">Filtered Period</h3>
+                    <p class="text-xl font-semibold text-gray-800">Rs {{ date_range_total|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Today's Total -->
+        <div class="flex-1 bg-white rounded-lg border border-gray-200 p-4 shadow-xs">
+            <div class="flex items-center">
+                <div class="p-2 rounded-lg bg-green-50 text-green-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-gray-500">Today's Purchases</h3>
+                    <p class="text-xl font-semibold text-gray-800">Rs {{ today_total|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table Section -->
+    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-xs">
+        <!-- Table Header with Filters -->
+        <div class="p-3 border-b border-gray-200 bg-gray-50">
+            <!-- Date filters row -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
+                <!-- Date range filter with single calendar icon -->
+<form method="get" class="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+    <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+        <!-- Start and End Date Inputs -->
+        <div class="flex items-center space-x-2">
+            
+            <!-- Start Date (with calendar icon) -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date }}"
+                    class="w-[160px] pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <span class="text-gray-500">to</span>
+
+            <!-- End Date (with calendar icon) -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date }}"
+                    class="w-[160px] pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex space-x-3 ml-3">
+            <button type="submit"
+                class="px-6 py-2 bg-blue-600 text-white text-sm rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Apply
+            </button>
+            <a href="?"
+                class="px-6 py-2 border border-gray-300 text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Reset
+            </a>
+        </div>
+    </div>
+</form>
+
+
+                
+               <!-- Compact search bar at bottom right -->
+<div class="relative w-full ml-4">
+    <!-- Search Icon -->
+    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+    </div>
+
+       <!-- Input Field -->
+    <input type="text" id="searchInput"
+        placeholder="Search medicine with name or company"
+        class="block w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md bg-white shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+</div>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loadingIndicator" class="p-8 hidden">
+            <div class="flex flex-col items-center justify-center space-y-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                <span class="text-sm text-gray-600">Loading medicine data...</span>
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="p-8 text-center {% if medicines %}hidden{% endif %}">
+            <div class="max-w-md mx-auto">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="mt-3 text-base font-medium text-gray-900">No purchases found</h3>
+                <p class="mt-1 text-sm text-gray-500">Try adjusting your date range or search query</p>
+            </div>
+        </div>
+        
+        <!-- Table Content -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Value</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="tableBody">
+                    {% for medicine in medicines %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-8 w-8 bg-blue-50 rounded-md flex items-center justify-center">
+                                    <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <div class="text-sm font-medium text-gray-900">{{ medicine.name|default:"N/A" }}</div>
+                                    <div class="text-xs text-gray-500">{{ medicine.formula|default:"" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ medicine.company|default:"N/A" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-500 font-mono">{{ medicine.batch_number|default:"N/A" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if medicine.stock > 20 %}bg-green-100 text-green-800
+                                {% elif medicine.stock > 0 %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ medicine.stock|default:0 }} units
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">Rs {{ medicine.retailers_price|floatformat:2|default:"0.00" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">
+                                Rs {{ medicine.total_value|floatformat:2|default:"0.00" }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-500">{{ medicine.updated_at|date:"M d, Y"|default:"N/A" }}</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('tableBody');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const emptyState = document.getElementById('emptyState');
+    
+    function showLoading() {
+        tableBody.innerHTML = '';
+        loadingIndicator.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+    }
+    
+    function showEmptyState() {
+        loadingIndicator.classList.add('hidden');
+        tableBody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+    }
+    
+    function loadPurchaseData(query = '') {
+        showLoading();
+        
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        
+        let url = `/medicine/search-purchases/?query=${encodeURIComponent(query)}`;
+        if (startDate) url += `&start_date=${startDate}`;
+        if (endDate) url += `&end_date=${endDate}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.classList.add('hidden');
+                data.data && data.data.length > 0 ? renderTableData(data.data) : showEmptyState();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingIndicator.classList.add('hidden');
+                showEmptyState();
+            });
+    }
+    
+    function renderTableData(medicines) {
+        tableBody.innerHTML = '';
+        
+        medicines.forEach(medicine => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors duration-150';
+            
+            let stockStatusClass = medicine.stock > 20 ? 'bg-green-100 text-green-800' : 
+                                 medicine.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 
+                                 'bg-red-100 text-red-800';
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-8 w-8 bg-blue-50 rounded-md flex items-center justify-center">
+                            <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <div class="text-sm font-medium text-gray-900">${medicine.name || 'N/A'}</div>
+                            <div class="text-xs text-gray-500">${medicine.formula || ''}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${medicine.company || 'N/A'}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500 font-mono">${medicine.batch_number || 'N/A'}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${stockStatusClass}">
+                        ${medicine.stock || 0} units
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">Rs ${medicine.retailers_price ? medicine.retailers_price.toFixed(2) : '0.00'}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">
+                        Rs ${((medicine.stock || 0) * (medicine.retailers_price || 0) / (medicine.units_per_box || 1)).toFixed(2)}
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">${medicine.last_purchased ? new Date(medicine.last_purchased).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</div>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+    
+    // Initial load
+    loadPurchaseData();
+    
+    // Search with debounce
+    let debounceTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            loadPurchaseData(this.value.trim());
+        }, 350);
+    });
+});
+</script>
+{% endblock %}

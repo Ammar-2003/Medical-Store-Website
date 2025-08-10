@@ -1,0 +1,112 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{% static 'css/main.css' %}" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receipt, #receipt * {
+                visibility: visible;
+            }
+            #receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+                font-size: 11px;
+            }
+            button, a {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 py-10">
+
+    <!-- Receipt -->
+    <div id="receipt" class="max-w-xs mx-auto bg-white p-4 font-mono text-sm shadow-md">
+        <div class="text-center mb-4">
+            <h1 class="text-xl font-bold">HANAN MEDICAL STORE</h1>
+            <p>Basti Salah, Bahawalpur</p>
+            <p>03121683846</p>
+        </div>
+        
+        <div class="border-t border-b border-black py-2 my-2 text-center">
+            <p>SALE #{{ sale.id }}</p>
+            <p>{{ sale.sale_date|date:"d/m/Y H:i" }}</p>
+        </div>
+        
+        <table class="w-full mb-2">
+            <thead>
+                <tr class="border-b border-black">
+                    <th class="text-left pb-1">Medicine</th>
+                    <th class="text-right pb-1">Qty</th>
+                    <th class="text-right pb-1">Price</th>
+                    <th class="text-right pb-1">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr class="border-b border-gray-200">
+                    <td class="py-1">{{ item.medicine.name|truncatechars:20 }}</td>
+                    <td class="text-right py-1">{{ item.quantity }}</td>
+                    <td class="text-right py-1">Rs {{ item.selling_price_per_unit }}</td>
+                    <td class="text-right py-1">Rs {{ item.total_price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="border-t border-black pt-2">
+            <div class="flex justify-between">
+                <span>Subtotal:</span>
+                <span>Rs {{ sale.subtotal }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span>Discount:</span>
+                <span>-Rs {{ sale.total_discount }}</span>
+            </div>
+            <div class="flex justify-between font-bold">
+                <span>TOTAL:</span>
+                <span>Rs {{ sale.final_amount }}</span>
+            </div>
+        </div>
+        
+        <div class="text-center mt-6 pt-2 border-t border-black">
+            <p>Thank you for your purchase!</p>
+            <p class="text-xs mt-1">No returns without receipt</p>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="max-w-xs mx-auto mt-6 flex justify-center space-x-4">
+        <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <i class="fas fa-print mr-2"></i> Print Again
+        </button>
+        <a href="{% url 'home' %}" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+            <i class="fas fa-home mr-2"></i> New Sale
+        </a>
+    </div>
+
+    <!-- Auto-print on load if needed -->
+    <script>
+    {% if print_immediately %}
+    document.addEventListener('DOMContentLoaded', function() {
+        window.print();
+    });
+    {% endif %}
+    </script>
+
+</body>
+</html>

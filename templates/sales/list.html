@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header Section -->
+    <div class="text-center mb-10">
+        <div class="inline-block bg-white p-4 rounded-xl shadow-md">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight">SALES HISTORY</h1>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Top Bar with Stats and Back Button -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+            <div>
+                <p class="mt-2 text-sm text-gray-600">
+                    Showing {{ sales|length }} of {{ total_sales }} sales
+                    {% if date_from or date_to %}(filtered){% endif %}
+                </p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <a href="{% url 'sales:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200/50 mb-6 transition-all duration-300 hover:shadow-md">
+            <div class="px-4 py-4 sm:px-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Filters</h3>
+                    <i class="fas fa-sliders-h text-gray-400"></i>
+                </div>
+            </div>
+            <div class="border-t border-gray-200/50 px-4 py-5 sm:p-6">
+                <form method="get" class="grid grid-cols-1 gap-y-6 sm:grid-cols-4 sm:gap-x-4">
+                    <!-- Search Input -->
+                    <div class="sm:col-span-1">
+                        <label for="saleSearch" class="block text-sm font-medium text-gray-700 mb-1">Search by ID</label>
+                        <div class="relative rounded-md shadow-sm">
+                            <input type="text" id="saleSearch" placeholder="e.g. 5, 10..." 
+                                   class="block w-full pr-10 border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 pl-3 transition-all duration-200">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Date From -->
+                    <div>
+                        <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                        <div class="relative rounded-md shadow-sm">
+                            <input type="date" name="date_from" id="date_from" 
+                                   class="block w-full pr-10 border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 pl-3 transition-all duration-200"
+                                   value="{{ date_from }}">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="far fa-calendar text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Date To -->
+                    <div>
+                        <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                        <div class="relative rounded-md shadow-sm">
+                            <input type="date" name="date_to" id="date_to" 
+                                   class="block w-full pr-10 border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm py-2 pl-3 transition-all duration-200"
+                                   value="{{ date_to }}">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="far fa-calendar text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Buttons -->
+                    <div class="sm:col-span-1 flex items-end space-x-3">
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 h-10 transition-all duration-200">
+                            <i class="fas fa-filter mr-2"></i> Apply Filters
+                        </button>
+                        <a href="{% url 'sales:list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 h-10 transition-all duration-200">
+                            <i class="fas fa-times mr-2"></i> Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Total Sales Card -->
+            <div class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200/50 p-6 transition-all duration-300 hover:shadow-md">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Sales Amount</p>
+                        <p class="text-2xl font-bold text-blue-600 mt-1">
+                            Rs {{ total_amount|floatformat:2 }}
+                        </p>
+                        {% if date_from or date_to %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            All time: Rs {{ all_time_total_amount|floatformat:2 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="p-3 rounded-full bg-blue-100/50 text-blue-600">
+                        <i class="fas fa-receipt text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Profit Card -->
+            <div class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200/50 p-6 transition-all duration-300 hover:shadow-md">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Profit</p>
+                        <p class="text-2xl font-bold text-green-600 mt-1">
+                            Rs {{ total_profit|floatformat:2 }}
+                        </p>
+                        {% if date_from or date_to %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            All time: Rs {{ all_time_total_profit|floatformat:2 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="p-3 rounded-full bg-green-100/50 text-green-600">
+                        <i class="fas fa-coins text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Table -->
+        <div class="bg-white shadow-lg rounded-xl border border-gray-200/50 overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sale ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for sale in sales %}
+                        {% if not sale.is_fully_returned %}
+                        <tr class="hover:bg-gray-50/80 transition-colors duration-200">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-blue-600 hover:text-blue-800">#{{ sale.id }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ sale.sale_date|date:"M d, Y h:i A" }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col space-y-1">
+                                    <div class="flex items-center">
+                                        <span class="inline-block w-2 h-2 rounded-full 
+                                              {% if sale.total_returned > 0 %}bg-yellow-500{% else %}bg-blue-500{% endif %} 
+                                              mr-2 animate-pulse"></span>
+                                        <span class="text-sm font-medium text-gray-900">
+                                            {{ sale.item_count }} items
+                                            {% if sale.returned_item_count > 0 %}
+                                            ({{ sale.returned_item_count }} returned)
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2 max-w-xs">
+                                        {% for item in sale.items.all|slice:3 %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                                  {% if item.returned_qty >= item.quantity %}bg-gray-100 text-gray-800 line-through
+                                                  {% elif item.returned_qty > 0 %}bg-yellow-100 text-yellow-800
+                                                  {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                            {{ item.medicine.name|truncatechars:15 }} 
+                                            ×{{ item.quantity }}
+                                            {% if item.returned_qty > 0 %}
+                                            (returned {{ item.returned_qty }})
+                                            {% endif %}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium 
+                                              {% if sale.total_returned > 0 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                                        Rs {{ sale.net_amount|floatformat:2 }}
+                                        {% if sale.total_returned > 0 %}
+                                        <span class="text-xs text-red-500">(Rs -{{ sale.total_returned|floatformat:2 }})</span>
+                                        {% endif %}
+                                    </span>
+                                    <div class="flex items-center text-xs text-gray-500">
+                                        <span class="text-red-500">-Rs {{ sale.total_discount|floatformat:2 }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                          {% if sale.is_fully_returned %}bg-gray-100 text-gray-800
+                                          {% elif sale.total_returned > 0 %}bg-yellow-100 text-yellow-800
+                                          {% else %}bg-green-100 text-green-800{% endif %}">
+                                    {% if sale.is_fully_returned %}Fully Returned
+                                    {% elif sale.total_returned > 0 %}Partially Returned
+                                    {% else %}Completed{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-3">
+                                    <button onclick="printReceipt({{ sale.id }})" 
+                                            class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                                            title="Print Receipt">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                    <a href="{% url 'sales:detail' sale.id %}" 
+                                       class="text-gray-400 hover:text-blue-600 transition-colors duration-200"
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button onclick="showModal('{% url 'sales:delete' sale.id %}', '{{ sale.id }}')" 
+                                            class="text-gray-400 hover:text-red-600 transition-colors duration-200"
+                                            title="Delete Sale">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                No sales records found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="bg-white px-6 py-4 flex items-center justify-between border-t border-gray-100">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                       class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing <span class="font-medium">{{ page_obj.start_index }}</span> to <span class="font-medium">{{ page_obj.end_index }}</span> of <span class="font-medium">{{ page_obj.paginator.count }}</span> results
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex shadow-sm rounded-md" aria-label="Pagination">
+                            {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                               class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Previous</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <a href="?page={{ num }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                                   aria-current="page" 
+                                   class="z-10 bg-black text-white relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    {{ num }}
+                                </a>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?page={{ num }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                                   class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    {{ num }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                               class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Next</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="confirmationModal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white/90 backdrop-blur-md rounded-xl border border-gray-200/50 shadow-xl w-full max-w-md transform transition-all">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+                <button onclick="hideModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete Sale #<span id="saleIdPlaceholder"></span>? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="hideModal()" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                    Cancel
+                </button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors duration-200">
+                    Delete Sale
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal functions
+    function showModal(deleteUrl, saleId) {
+        const modal = document.getElementById('confirmationModal');
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        const saleIdElement = document.getElementById('saleIdPlaceholder');
+        
+        saleIdElement.textContent = saleId;
+        confirmBtn.onclick = function() {
+            window.location.href = deleteUrl;
+        };
+        
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function hideModal() {
+        document.getElementById('confirmationModal').classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('confirmationModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideModal();
+        }
+    });
+
+    function printReceipt(saleId) {
+        window.open(`/sales/receipt/${saleId}/`, '_blank');
+    }
+
+    // Client-side search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('saleSearch');
+        const salesTable = document.querySelector('tbody');
+        const salesRows = salesTable.querySelectorAll('tr');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            salesRows.forEach(row => {
+                const saleId = row.querySelector('td:first-child div').textContent.toLowerCase();
+                
+                if (saleId.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Auto-submit date filters when changed
+        const filterForm = document.querySelector('form[method="get"]');
+        const dateFromInput = document.getElementById('date_from');
+        const dateToInput = document.getElementById('date_to');
+        
+        function submitForm() {
+            filterForm.submit();
+        }
+        
+        if (dateFromInput) {
+            dateFromInput.addEventListener('change', submitForm);
+        }
+        if (dateToInput) {
+            dateToInput.addEventListener('change', submitForm);
+        }
+    });
+</script>
+
+<style>
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    th {
+        position: sticky;
+        top: 0;
+        background-color: #f9fafb;
+        z-index: 10;
+    }
+    
+    tr:last-child td {
+        border-bottom: 0;
+    }
+    
+    /* Smooth transitions for all interactive elements */
+    a, button, input, .transition-all {
+        transition: all 0.2s ease-in-out;
+    }
+    
+    /* Modern shadow effect */
+    .shadow-lg {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* Glass morphism effect */
+    .backdrop-blur-sm {
+        backdrop-filter: blur(4px);
+    }
+    
+    /* Responsive table container */
+    @media (max-width: 640px) {
+        .container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center mb-10">
+  <div class="inline-block bg-white p-6 rounded-2xl shadow-lg mb-4">
+    <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800 tracking-tight">RETURN MEDICINE</h1>
+  </div>
+</div>
+
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">Return Items from Sale #{{ sale.id }}</h1>
+    
+    <!-- Sale Summary Card -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
+        <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Sale Summary</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                <p class="text-blue-600 text-sm font-medium mb-1">Subtotal:</p>
+                <p class="font-bold text-xl text-blue-800">Rs {{ sale.subtotal|floatformat:2 }}</p>
+            </div>
+            <div class="bg-red-50 p-4 rounded-lg border border-red-100 shadow-sm">
+                <p class="text-red-600 text-sm font-medium mb-1">Discounts:</p>
+                <p class="font-bold text-xl text-red-800">- Rs {{ sale.discount_amount|add:sale.price_deducted|floatformat:2 }}</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg border border-green-100 shadow-sm">
+                <p class="text-green-600 text-sm font-medium mb-1">Final Amount:</p>
+                <p class="font-bold text-xl text-green-800">Rs {{ sale.final_amount|floatformat:2 }}</p>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-lg border border-purple-100 shadow-sm">
+                <p class="text-purple-600 text-sm font-medium mb-1">Already Returned:</p>
+                <p class="font-bold text-xl text-purple-800">Rs {{ sale.returned_amount|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Items to Return</h2>
+            
+            {% if item_forms %}
+            <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Original</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Returned</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Available</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Return Qty</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Restock</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for item_form in item_forms %}
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="font-medium text-gray-900">
+                                        {{ item_form.item.medicine.name|default:"Deleted Medicine" }}
+                                    </span>
+                                    {% if not item_form.item.medicine %}
+                                    <span class="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Deleted</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+                                {{ item_form.item.quantity }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+                                {{ item_form.item.returned_quantity }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <span class="font-medium text-blue-600 px-2 py-1 bg-blue-50 rounded-full">{{ item_form.available_to_return }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex justify-center">
+                                    {{ item_form.form.quantity }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <label class="inline-flex items-center">
+                                    {{ item_form.form.restock }}
+                                </label>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-gray-500">
+                                <span class="font-medium">Rs {{ item_form.unit_price|floatformat:2 }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <span class="font-medium text-green-600 return-amount" data-item="{{ item_form.item.id }}">Rs 0.00</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-gray-50">
+                        <tr>
+                            <td colspan="6" class="px-6 py-3 text-right font-semibold text-gray-700">Items Total:</td>
+                            <td colspan="2" class="px-6 py-3 text-right font-semibold text-gray-900">
+                                <span id="items-total" class="text-lg">Rs 0.00</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" class="px-6 py-3 text-right font-semibold text-gray-700">
+                                Discount Applied:
+                            </td>
+                            <td colspan="2" class="px-6 py-3 text-right font-semibold text-red-600">
+                                <span id="discount-amount" class="text-lg">- Rs {{ sale.discount_amount|add:sale.price_deducted|floatformat:2 }}</span>
+                            </td>
+                        </tr>
+                        <tr class="border-t-2 border-gray-200 bg-blue-50">
+                            <td colspan="6" class="px-6 py-3 text-right font-bold text-gray-700">Total Refund:</td>
+                            <td colspan="2" class="px-6 py-3 text-right font-bold text-blue-600">
+                                <span id="total-refund" class="text-xl">Rs 0.00</span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <p class="text-yellow-700 font-medium">All items from this sale have already been returned.</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="flex flex-col sm:flex-row items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                <a href="{% url 'sales:detail' sale.id %}" class="mb-4 sm:mb-0 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed" id="submit-btn" disabled>
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Process Return
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Constants
+    const discountAmount = {{ sale.discount_amount|add:sale.price_deducted|default:0 }};
+    const alreadyReturned = {{ sale.returned_amount|default:0 }};
+    const quantityInputs = document.querySelectorAll('input[name$="-quantity"]');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    // Initialize with event listeners
+    quantityInputs.forEach(input => {
+        // Get the max quantity from the data attribute
+        const max = parseInt(input.getAttribute('max')) || 0;
+        input.dataset.max = max; // Store it in dataset for validation
+        
+        // Find the unit price from the corresponding table cell
+        const row = input.closest('tr');
+        const unitPriceCell = row.querySelector('td:nth-last-child(2)');
+        const unitPrice = parseFloat(unitPriceCell.textContent.replace('Rs ', '')) || 0;
+        input.dataset.unitPrice = unitPrice;
+        
+        input.addEventListener('input', handleQuantityChange);
+        input.addEventListener('change', handleQuantityChange);
+        input.addEventListener('blur', validateQuantity);
+    });
+    
+    // Calculate initial values
+    updateCalculations();
+    
+    function handleQuantityChange(e) {
+        const input = e.target;
+        validateQuantity({ target: input });
+        updateCalculations();
+    }
+    
+    function validateQuantity(e) {
+        const input = e.target;
+        const max = parseInt(input.dataset.max);
+        let value = parseInt(input.value) || 0;
+        
+        if (value > max) {
+            input.value = max;
+            value = max;
+            showToast(`Maximum available quantity is ${max}`, 'warning');
+        }
+        
+        if (value < 0) {
+            input.value = 0;
+            value = 0;
+        }
+        
+        // Enable/disable submit button
+        submitBtn.disabled = !Array.from(quantityInputs).some(
+            input => (parseInt(input.value) || 0) > 0
+        );
+    }
+    
+    function updateCalculations() {
+        let itemsTotal = 0;
+        
+        // Calculate line items and total
+        quantityInputs.forEach(input => {
+            const quantity = parseInt(input.value) || 0;
+            const unitPrice = parseFloat(input.dataset.unitPrice);
+            const itemAmount = quantity * unitPrice;
+            
+            // Update line item amount
+            const amountCell = input.closest('tr').querySelector('.return-amount');
+            if (amountCell) {
+                amountCell.textContent = `Rs ${itemAmount.toFixed(2)}`;
+            }
+            
+            itemsTotal += itemAmount;
+        });
+        
+        // Calculate total refund
+        let totalRefund;
+        if (alreadyReturned > 0) {
+            // For subsequent returns (already returned something), don't subtract discount
+            totalRefund = itemsTotal;
+        } else {
+            // For first return, subtract discount (but never go negative)
+            totalRefund = Math.max(0, itemsTotal - discountAmount);
+        }
+        
+        // Update summary
+        document.getElementById('items-total').textContent = `Rs ${itemsTotal.toFixed(2)}`;
+        document.getElementById('total-refund').textContent = `Rs ${totalRefund.toFixed(2)}`;
+    }
+    
+    function showToast(message, type = 'info') {
+        const existingToasts = document.querySelectorAll('.toast');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = `toast fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white flex items-center ${
+            type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+        }`;
+        
+        toast.innerHTML = `
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            ${message}
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+});
+</script>
+
+<style>
+    /* Form controls */
+    input[type="number"].return-qty {
+        width: 80px;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        text-align: center;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+    
+    input[type="number"].return-qty:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    
+    /* Checkbox styling */
+    input[type="checkbox"] {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-color: #d1d5db;
+        border-radius: 0.25rem;
+    }
+    
+    /* Toast animations */
+    .toast {
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* Table styling */
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.9rem;
+    }
+    
+    table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        letter-spacing: 0.05em;
+    }
+    
+    table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Button styling */
+    #submit-btn {
+        transition: all 0.2s ease;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        table {
+            font-size: 0.8rem;
+        }
+        
+        input[type="number"].return-qty {
+            width: 60px;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,966 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4">
+    <!-- Two-column layout for search boxes -->
+    <div class="flex flex-col md:flex-row gap-6 mb-6">
+        <!-- Medicine Search (left side) -->
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Medicine Search</h1>
+            <div class="relative" id="search-container">
+                <div class="relative flex">
+                    <input 
+                        type="text"
+                        name="search_query"
+                        id="medicine-search"
+                        value="{{ request.GET.search_query }}"
+                        placeholder="Search medicines (e.g., Panadol 500mg)"
+                        class="flex-grow pl-4 pr-12 py-2 border border-gray-300 rounded-full text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                        autocomplete="off">
+                </div>
+                <!-- Suggestions Dropdown -->
+                <div id="suggestions-dropdown" class="hidden absolute z-10 w-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
+                    <div id="suggestions-list"></div>
+                    <div id="no-results" class="hidden px-4 py-3 text-gray-500 italic">
+                        No medicines found
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Search (right side) -->
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Formula Search</h1>
+            <div class="relative" id="formula-search-container">
+                <div class="relative flex">
+                    <input 
+                        type="text"
+                        id="formulaSearch"
+                        value="{{ request.GET.search_query }}"
+                        placeholder="Search Formula..."
+                        class="flex-grow pl-4 pr-12 py-2 border border-gray-300 rounded-full text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                        autocomplete="off">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart Button -->
+    <div class="mt-4 flex justify-end">
+        <a id="buy-button" href="{% url 'sales:cart' %}" tabindex="0"
+           class="inline-flex items-center px-6 py-2 bg-black text-white rounded-full hover:bg-gray-800 transition-colors">
+           <i class="fas fa-shopping-cart mr-2"></i>
+           Buy ( <span id="cart-count">{{ request.session.cart|length|default:0 }}</span> )
+        </a>
+    </div>
+</div>
+
+    <!-- Search Results Section -->
+<div id="search-results-container" class="mt-40">
+        {% if medicines %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-800">
+                    <i class="fas fa-list mr-2"></i> Search Results
+                    {% if request.GET.search_query %}
+                    <span class="text-sm font-normal text-gray-500 ml-2">for "{{ request.GET.search_query }}"</span>
+                    {% endif %}
+                </h2>
+                <a href="{% url 'medicine' %}" class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-plus mr-1.5"></i> Add Medicine
+                </a>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formula</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rack</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medicine-results" class="bg-white divide-y divide-gray-200">
+                        {% for medicine in medicines %}
+                        <tr class="hover:bg-gray-50 transition-colors" data-medicine-id="{{ medicine.id }}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" class="medicine-select h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900 flex items-center">
+                                    <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2 py-0.5 rounded">#{{ medicine.id }}</span>
+                                    {{ medicine.name }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ medicine.company }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ medicine.formula }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="text-gray-400 line-through mr-1">₹{{ medicine.price }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                    {{ medicine.get_discount_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ medicine.rack_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if medicine.stock > 10 %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ medicine.stock }} in stock
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="number" min="1" max="{{ medicine.stock }}" value="" 
+                                       class="medicine-qty w-16 px-2 py-1 border border-gray-300 rounded">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <button class="add-to-cart text-blue-600 hover:text-blue-900" title="Add to Cart">
+                                        <i class="fas fa-cart-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Formula Search -->
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+    <!-- Search Results -->
+    <div id="searchResults" class="hidden transition-all duration-300 ease-in-out">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">Search Results</h2>
+            <span id="resultCount" class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full"></span>
+        </div>
+
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formula</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Results will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="noResults" class="hidden text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No matches found</h3>
+            <p class="mt-1 text-gray-500">Try a different formula or chemical symbol</p>
+        </div>
+    </div>
+</div>
+
+<script>
+        // Formula JS
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('formulaSearch');
+    const resultsContainer = document.getElementById('searchResults');
+    const tableBody = document.getElementById('resultsTableBody');
+    const noResults = document.getElementById('noResults');
+    const resultCount = document.getElementById('resultCount');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+        
+        if (query.length === 0) {
+            resultsContainer.classList.add('hidden');
+            return;
+        }
+
+        // Show loading state
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                    <div class="flex justify-center items-center space-x-2">
+                        <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Searching...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+        resultsContainer.classList.remove('hidden');
+        noResults.classList.add('hidden');
+
+        debounceTimer = setTimeout(() => {
+            fetch(`/search-by-formula/?q=${encodeURIComponent(query)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.length > 0) {
+                        renderResults(data);
+                        noResults.classList.add('hidden');
+                        resultCount.textContent = `${data.length} ${data.length === 1 ? 'result' : 'results'}`;
+                    } else {
+                        tableBody.innerHTML = '';
+                        noResults.classList.remove('hidden');
+                        resultCount.textContent = '0 results';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-red-500">
+                                Error loading results. Please try again.
+                            </td>
+                        </tr>
+                    `;
+                    noResults.classList.add('hidden');
+                });
+        }, 350); // 350ms debounce delay
+    });
+
+    function renderResults(medicines) {
+        tableBody.innerHTML = '';
+        
+        medicines.forEach(medicine => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 transition-colors';
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="font-medium text-gray-900">${medicine.name}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-gray-900 font-mono">${medicine.formula}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-500">
+                    ${medicine.company}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        Rs. ${medicine.price}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-gray-500">
+                    ${medicine.stock} units
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+});
+// Formula JS ENDs
+
+
+document.addEventListener('keydown', function(e) {
+    const buyButton = document.getElementById('buy-button');
+
+    // TAB: Focus the buy button
+    if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        if (buyButton) {
+            buyButton.focus();
+        }
+    }
+
+    // ENTER: Trigger click when focused on buy button
+    if (e.key === 'Enter' && document.activeElement === buyButton) {
+        e.preventDefault();  // Prevent any default behavior
+        buyButton.click();   // Simulate click
+    }
+});
+document.addEventListener('DOMContentLoaded', function() {
+    // Track if popup is open
+    let isPopupOpen = false;
+    let currentInvalidInput = null;
+    
+    // Track current active element
+    let currentActiveElement = null;
+
+    // 1. Auto-focus on search input
+    const searchInput = document.getElementById('medicine-search');
+    let isProgrammaticFocus = false;
+
+    // Initial setup
+    searchInput.value = '';
+    isProgrammaticFocus = true;
+    searchInput.focus();
+    currentActiveElement = searchInput;
+
+    // Handle focus events
+    searchInput.addEventListener('focus', function() {
+        if (isProgrammaticFocus && !isPopupOpen) {
+            this.value = '';
+        }
+        currentActiveElement = searchInput;
+        isProgrammaticFocus = false;
+    });
+
+    // 2. Simple stock validation
+    function checkStock(input) {
+        const value = parseInt(input.value) || 0;
+        const maxStock = parseInt(input.getAttribute('max')) || 0;
+        
+        if (value > maxStock) {
+            alert(`Medicine out of stock! Only ${maxStock} available.`);
+            window.location.reload(); // Reload to refresh stock data
+            return false;
+        }
+        return true;
+    }
+
+    // 3. Show simple error message
+    function showSimpleError(message) {
+        isPopupOpen = true;
+        
+        const popup = document.createElement('div');
+        popup.className = 'fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50';
+        popup.innerHTML = `
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-red-600">Error</h3>
+                    <button class="close-popup text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 text-red-500 text-2xl mr-3">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-700 mb-2">${message}</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button class="close-popup px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                        OK
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(popup);
+
+        const okButton = popup.querySelector('.close-popup');
+        okButton.focus();
+
+        function closePopup() {
+            isPopupOpen = false;
+            popup.remove();
+            searchInput.focus();
+        }
+
+        popup.querySelectorAll('.close-popup').forEach(btn => {
+            btn.addEventListener('click', closePopup);
+        });
+
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                closePopup();
+                document.removeEventListener('keydown', escHandler);
+            }
+        });
+    }
+
+    // 4. Handle keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        // Block all keys if popup is open
+        if (isPopupOpen) {
+            if (e.key === 'Escape') {
+                const closeBtn = document.querySelector('.close-popup');
+                if (closeBtn) closeBtn.click();
+            }
+            e.preventDefault();
+            return;
+        }
+
+        // Enter key navigation
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            
+            if (currentActiveElement === searchInput) {
+                const firstMedicineRow = document.querySelector('tr[data-medicine-id]');
+                if (firstMedicineRow) {
+                    const firstQtyInput = firstMedicineRow.querySelector('.medicine-qty');
+                    if (firstQtyInput) {
+                        currentActiveElement = firstQtyInput;
+                        firstQtyInput.focus();
+                    }
+                }
+            } 
+            else if (currentActiveElement.classList.contains('medicine-qty')) {
+                // Check stock before proceeding
+                if (!checkStock(currentActiveElement)) return;
+                
+                // Move to add to cart button
+                const row = currentActiveElement.closest('tr');
+                const addToCartBtn = row.querySelector('.add-to-cart');
+                if (addToCartBtn) {
+                    currentActiveElement = addToCartBtn;
+                    addToCartBtn.focus();
+                }
+            }
+            else if (currentActiveElement.classList.contains('add-to-cart')) {
+                // Final stock check before adding to cart
+                const row = currentActiveElement.closest('tr');
+                const qtyInput = row.querySelector('.medicine-qty');
+                
+                if (qtyInput && !checkStock(qtyInput)) return;
+                
+                // Proceed with add to cart
+                currentActiveElement.click();
+                
+                setTimeout(() => {
+                    isProgrammaticFocus = true;
+                    currentActiveElement = searchInput;
+                    searchInput.focus();
+                    searchInput.value = '';
+                }, 100);
+            }
+        }
+
+        // Arrow key navigation between medicine rows
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            if (currentActiveElement.classList.contains('medicine-qty')) {
+                e.preventDefault();
+                const currentRow = currentActiveElement.closest('tr');
+                let nextRow;
+                
+                if (e.key === 'ArrowDown') {
+                    nextRow = currentRow.nextElementSibling;
+                } else {
+                    nextRow = currentRow.previousElementSibling;
+                }
+                
+                if (nextRow && nextRow.matches('tr[data-medicine-id]')) {
+                    const nextQtyInput = nextRow.querySelector('.medicine-qty');
+                    if (nextQtyInput) {
+                        currentActiveElement = nextQtyInput;
+                        nextQtyInput.focus();
+                    }
+                }
+            }
+        }
+    });
+
+    // 5. Track focus changes
+    document.addEventListener('focusin', function(e) {
+        if (e.target.classList.contains('medicine-qty') || 
+            e.target.classList.contains('add-to-cart') ||
+            e.target === searchInput) {
+            if (!isPopupOpen) {
+                currentActiveElement = e.target;
+            }
+        }
+    });
+
+    // 6. Handle form submissions
+    document.addEventListener('submit', function(e) {
+        // Check all quantity inputs in the form
+        const quantityInputs = e.target.querySelectorAll('.medicine-qty');
+        let hasStockIssue = false;
+        
+        quantityInputs.forEach(input => {
+            if (!checkStock(input)) {
+                hasStockIssue = true;
+            }
+        });
+        
+        if (hasStockIssue) {
+            e.preventDefault();
+        }
+    });
+});
+// Store all medicines data for client-side search
+let allMedicines = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Load all medicines data initially
+    fetchAllMedicines();
+    
+    // Search functionality
+    const searchInput = document.getElementById('medicine-search');
+    const suggestionsDropdown = document.getElementById('suggestions-dropdown');
+    const suggestionsList = document.getElementById('suggestions-list');
+    const noResults = document.getElementById('no-results');
+    const searchResultsContainer = document.getElementById('search-results-container');
+    const medicineResults = document.getElementById('medicine-results');
+    let activeIndex = -1;
+    
+    function hideSuggestions() {
+        suggestionsDropdown.classList.add('hidden');
+        activeIndex = -1;
+    }
+    
+    function handleKeyNavigation(e) {
+        const items = suggestionsList.querySelectorAll('.suggestion-item');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = (activeIndex + 1) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = (activeIndex - 1 + items.length) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === 'Enter' && activeIndex >= 0) {
+            e.preventDefault();
+            items[activeIndex].click();
+        } else if (e.key === 'Enter') {
+            // If no suggestion is selected but Enter is pressed, perform search
+            performSearch(searchInput.value);
+        }
+    }
+    
+    function updateActiveItem(items) {
+        items.forEach((item, index) => {
+            if (index === activeIndex) {
+                item.classList.add('bg-gray-200');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('bg-gray-200');
+            }
+        });
+    }
+    
+    function fetchAllMedicines() {
+        fetch('{% url "medicine_search_results" %}?q=')
+            .then(response => response.json())
+            .then(data => {
+                allMedicines = data.results;
+                // If there's an initial search query, perform search immediately
+                if (searchInput.value.length > 0) {
+                    performSearch(searchInput.value);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching all medicines:', error);
+            });
+    }
+    
+    function getSuggestions(query) {
+        if (!query || query.length < 1) {
+            return [];
+        }
+        
+        const lowerQuery = query.toLowerCase();
+        return allMedicines.filter(medicine => {
+            return medicine.name.toLowerCase().includes(lowerQuery);
+        });
+    }
+    
+    function renderSuggestions(suggestions) {
+        if (suggestions.length === 0) {
+            suggestionsList.innerHTML = '';
+            suggestionsList.classList.add('hidden');
+            noResults.classList.remove('hidden');
+            suggestionsDropdown.classList.remove('hidden');
+            return;
+        }
+        
+        suggestionsList.innerHTML = '';
+        suggestionsList.classList.remove('hidden');
+        noResults.classList.add('hidden');
+        
+        suggestions.forEach((medicine, index) => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'suggestion-item block border-b border-gray-200 last:border-0';
+            suggestionItem.tabIndex = 0;
+            
+            const price = typeof medicine.price === 'number' ? medicine.price : parseFloat(medicine.price);
+            const sellingPrice = typeof medicine.selling_price === 'number' ? medicine.selling_price : parseFloat(medicine.selling_price);
+            
+            const originalPrice = `Rs ${price.toFixed(2)}`;
+            const discountedPrice = `Rs ${sellingPrice.toFixed(2)}`;
+            const discountDisplay = medicine.discount_display ? 
+                `<span class="text-xs bg-blue-100 text-blue-800 px-1 rounded ml-2">${medicine.discount_display} OFF</span>` : '';
+            
+            const rackInfo = medicine.rack_number && medicine.rack_number !== 'N/A' ? 
+                `<span class="text-gray-500 text-sm">Rack: ${medicine.rack_number}</span>` : '';
+            
+            suggestionItem.innerHTML = `
+                <div class="flex justify-between items-center p-3 hover:bg-gray-50 transition-colors">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium truncate flex items-center">
+                            ${highlightMatch(medicine.name, searchInput.value)}
+                            ${discountDisplay}
+                        </div>
+                        <div class="text-sm truncate mt-1">
+                            ${rackInfo}
+                            <span class="ml-2 text-xs ${medicine.stock > 10 ? 'text-green-500' : 'text-yellow-500'}">
+                                ${medicine.stock} in stock
+                            </span>
+                        </div>
+                    </div>
+                    <div class="ml-4 text-right whitespace-nowrap">
+                        <div class="font-medium text-blue-600">${discountedPrice}</div>
+                        <div class="text-gray-400 line-through text-xs">${originalPrice}</div>
+                    </div>
+                </div>
+            `;
+            
+            suggestionItem.addEventListener('click', (e) => {
+                e.preventDefault();
+                searchInput.value = medicine.name;
+                performSearch(medicine.name);
+                hideSuggestions();
+            });
+            
+            suggestionsList.appendChild(suggestionItem);
+        });
+        
+        suggestionsDropdown.classList.remove('hidden');
+    }
+    
+    function highlightMatch(text, query) {
+        if (!query) return text;
+        
+        const lowerText = text.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        const startIndex = lowerText.indexOf(lowerQuery);
+        
+        if (startIndex === -1) return text;
+        
+        const endIndex = startIndex + query.length;
+        return text.substring(0, startIndex) + 
+               `<span class="match-highlight">${text.substring(startIndex, endIndex)}</span>` + 
+               text.substring(endIndex);
+    }
+    
+    function performSearch(query) {
+        const lowerQuery = query.toLowerCase();
+        const results = allMedicines.filter(medicine => {
+            return medicine.name.toLowerCase().includes(lowerQuery);
+        });
+        
+        renderMedicineResults(results);
+    }
+    
+    function renderMedicineResults(medicines) {
+        if (!medicines || medicines.length === 0) {
+            searchResultsContainer.innerHTML = `
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                        <h2 class="text-lg font-semibold text-gray-800">
+                            <i class="fas fa-list mr-2"></i> Search Results
+                            ${searchInput.value ? `<span class="text-sm font-normal text-gray-500 ml-2">for "${searchInput.value}"</span>` : ''}
+                        </h2>
+                        <a href="{% url 'medicine' %}" class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-plus mr-1.5"></i> Add New
+                        </a>
+                    </div>
+                    <div class="p-8 text-center text-gray-500">
+                        ${searchInput.value ? 'No medicines found matching your search.' : 'Start typing to search for medicines.'}
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        let resultsHTML = `
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h2 class="text-lg font-semibold text-gray-800">
+                        <i class="fas fa-list mr-2"></i> Search Results
+                        ${searchInput.value ? `<span class="text-sm font-normal text-gray-500 ml-2">for "${searchInput.value}"</span>` : ''}
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formula</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch No</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rack</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+        `;
+        
+        medicines.forEach(medicine => {
+            resultsHTML += `
+                <tr class="hover:bg-gray-50 transition-colors" data-medicine-id="${medicine.id}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="font-medium text-gray-900 flex items-center">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2 py-0.5 rounded">#${medicine.id}</span>
+                            ${medicine.name}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${medicine.company}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${medicine.formula}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${medicine.batch_no}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="font-medium">Rs ${medicine.selling_price}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${medicine.rack_number || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${medicine.stock > 10 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${medicine.stock} in stock
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="number" min="" max="${medicine.stock}" value="" 
+                               class="medicine-qty w-16 px-2 py-1 border border-gray-300 rounded">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button class="add-to-cart text-blue-600 hover:text-blue-900" title="Add to Cart">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        resultsHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        
+        searchResultsContainer.innerHTML = resultsHTML;
+        
+        // Re-attach event listeners to the new elements
+        attachEventListeners();
+    }
+    
+    function attachEventListeners() {
+        // Add to cart buttons
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                const medicineId = row.getAttribute('data-medicine-id');
+                const quantityInput = row.querySelector('.medicine-qty');
+                const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
+                
+                addToCart(medicineId, quantity);
+            });
+        });
+        
+    }
+    
+    // Event listeners for search
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Show suggestions if there's a query
+        if (query.length > 0) {
+            const suggestions = getSuggestions(query);
+            renderSuggestions(suggestions);
+        } else {
+            hideSuggestions();
+        }
+        
+        // Always perform search with the current query
+        performSearch(query);
+    });
+    
+    searchInput.addEventListener('focus', function() {
+        const query = this.value.trim();
+        if (query.length > 0) {
+            const suggestions = getSuggestions(query);
+            renderSuggestions(suggestions);
+        }
+    });
+    
+    searchInput.addEventListener('keydown', handleKeyNavigation);
+    
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target)) {
+            hideSuggestions();
+        }
+    });
+    
+    // Cart functionality
+    function updateCartCount(count) {
+        const cartCountElement = document.getElementById('cart-count');
+        if (cartCountElement) {
+            cartCountElement.textContent = count;
+            cartCountElement.classList.toggle('hidden', count === 0);
+        }
+    }
+    
+    function addToCart(medicineId, quantity) {
+        fetch('{% url "sales:cart" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                action: 'add',
+                medicine_id: medicineId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateCartCount(data.cart_count);
+                
+                // Visual feedback
+                const button = document.querySelector(`tr[data-medicine-id="${medicineId}"] .add-to-cart`);
+                if (button) {
+                    const originalHTML = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i> Added';
+                    button.classList.add('bg-green-100', 'text-green-800');
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.classList.remove('bg-green-100', 'text-green-800');
+                    }, 2000);
+                }
+            } else {
+                alert(data.message || 'Failed to add to cart');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to add to cart. Please try again.');
+        });
+    }
+
+    // Add this function to your existing code
+function validateAddToCart(medicineId, quantityInput) {
+    // Find the medicine in your allMedicines array
+    const medicine = allMedicines.find(m => m.id == medicineId);
+    
+    // 1. Check if medicine is out of stock
+    if (medicine.stock <= 0) {
+        alert("Medicine out of stock");
+        return false;
+    }
+    
+    // 2. Check if quantity is empty or 0
+    const qty = parseInt(quantityInput.value) || 0;
+    if (qty <= 0) {
+        alert("You must enter Medicine Quantity at least 1");
+        quantityInput.focus();
+        return false;
+    }
+    
+    // 3. Check if quantity exceeds available stock
+    if (qty > medicine.stock) {
+        alert(`Only ${medicine.stock} items available in stock`);
+        quantityInput.value = medicine.stock;
+        quantityInput.focus();
+        return false;
+    }
+    
+    // All validations passed
+    return true;
+}
+
+// Then modify your add-to-cart click handler like this:
+function attachEventListeners() {
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const row = this.closest('tr');
+            const medicineId = row.getAttribute('data-medicine-id');
+            const quantityInput = row.querySelector('.medicine-qty');
+            
+            // Validate before adding to cart
+            if (!validateAddToCart(medicineId, quantityInput)) {
+                return false; // Stop if validation fails
+            }
+            
+            // Only proceed if validation passes
+            const quantity = parseInt(quantityInput.value);
+            addToCart(medicineId, quantity);
+        });
+    });
+}
+    
+    // Initialize cart count
+    updateCartCount({{ request.session.cart|length|default:0 }});
+    
+    // Initial render if there are medicines from server-side
+    {% if medicines %}
+    renderMedicineResults({{ medicines|safe }});
+    {% endif %}
+});
+
+
+</script>
+
+<style>
+.suggestion-item {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.suggestion-item:hover {
+    background-color: #f9fafb; /* gray-50 */
+}
+
+.match-highlight {
+    font-weight: bold;
+    color: #3b82f6; /* blue-500 */
+}
+
+#formulaSearch {
+    max-width: 500px;
+    margin: 0 auto;
+    font-size: 1.1rem;
+    padding: 10px 15px;
+}
+
+#searchResults {
+    margin-top: 20px;
+}
+
+.table th, .table td {
+    vertical-align: middle;
+}
+@keyframes bounce-in {
+    0% { transform: scale(0.9); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fade-out {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.animate-bounce-in {
+    animation: bounce-in 0.3s ease-out forwards;
+}
+
+.animate-fade-out {
+    animation: fade-out 0.3s ease-out forwards;
+}
+</style>
+{% endblock %}
