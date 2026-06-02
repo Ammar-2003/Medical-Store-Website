@@ -246,36 +246,42 @@ class ReceiptView(TemplateView):
 
 class SalesDashboardView(TemplateView):
     template_name = 'sales/dashboard.html'
-    
+
     def get_period_start_dates(self):
         today = timezone.now().date()
+
+        # Default weekly start = Monday
+        weekly_start = today - timedelta(days=today.weekday())
+
+        # If it's the 1st of the month, reset weekly start to today
+        if today.day == 1:
+            weekly_start = today
+
         return {
-            'weekly': today - timedelta(days=today.weekday()),
+            'weekly': weekly_start,
             'monthly': today.replace(day=1),
             'six_monthly': date(today.year, 1 if today.month <= 6 else 7, 1),
         }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
         period_starts = self.get_period_start_dates()
 
-        # Get all aggregated data with minimal queries
+        # Get aggregated data
         today_data = Sale.get_aggregated_data('today')
         weekly_data = Sale.get_aggregated_data('weekly')
         monthly_data = Sale.get_aggregated_data('monthly')
         six_month_data = Sale.get_aggregated_data('six_months')
         all_time_data = Sale.get_aggregated_data()
 
-        # Get recent sales for display (limited to 5 each)
+        # Recent sales (only today for now)
         recent_sales = {
             'today': Sale.get_sales_data('today')[:5],
-           # 'weekly': Sale.get_sales_data('weekly'),
-           # 'monthly': Sale.get_sales_data('monthly')[:5],
-          #  'six_monthly': Sale.get_sales_data('six_months')[:5],
         }
 
         context.update({
-            # Today's data
+            # Today
             'today_sales': recent_sales['today'],
             'today_total': today_data['total_net'],
             'today_return_amount': today_data['total_returned'],
@@ -283,8 +289,7 @@ class SalesDashboardView(TemplateView):
             'today_sales_count': today_data['total_sales'],
             'today_profit': today_data['total_profit'],
 
-            # Weekly data
-           # 'weekly_sales': recent_sales['weekly'],
+            # Weekly
             'weekly_total': weekly_data['total_net'],
             'weekly_return_amount': weekly_data['total_returned'],
             'weekly_gross_sales': weekly_data['gross_sales'],
@@ -292,17 +297,15 @@ class SalesDashboardView(TemplateView):
             'weekly_profit': weekly_data['total_profit'],
             'weekly_start_date': period_starts['weekly'],
 
-            # Monthly data
-          #  'monthly_sales': recent_sales['monthly'],
+            # Monthly
             'monthly_total': monthly_data['total_net'],
             'monthly_return_amount': monthly_data['total_returned'],
             'monthly_gross_sales': monthly_data['gross_sales'],
             'monthly_sales_count': monthly_data['total_sales'],
             'monthly_profit': monthly_data['total_profit'],
             'monthly_start_date': period_starts['monthly'],
-            
-            # 6 Months data
-           # 'six_months_sales': recent_sales['six_monthly'],
+
+            # Six Months
             'six_months_total': six_month_data['total_net'],
             'six_months_return_amount': six_month_data['total_returned'],
             'six_months_gross_sales': six_month_data['gross_sales'],
@@ -310,7 +313,7 @@ class SalesDashboardView(TemplateView):
             'six_months_profit': six_month_data['total_profit'],
             'six_months_start_date': period_starts['six_monthly'],
 
-            # All-time data
+            # All-time
             'all_time_total': all_time_data['total_net'],
             'all_time_return_amount': all_time_data['total_returned'],
             'all_time_gross_sales': all_time_data['gross_sales'],
@@ -319,6 +322,7 @@ class SalesDashboardView(TemplateView):
         })
 
         return context
+
 
 class SaleDetailView(DetailView):
     model = Sale
@@ -366,11 +370,15 @@ class SalesListView(ListView):
         
         # Optimized prefetching with annotations
         return queryset.select_related().prefetch_related(
-            Prefetch('items', 
-                    queryset=SaleItem.objects.select_related('medicine')
-                            .annotate(returned_qty=Coalesce(Sum('return_items__quantity'), 0))),
-            Prefetch('returns__items',
-                    queryset=ReturnItem.objects.select_related('sale_item'))
+            Prefetch(
+                'items',
+                queryset=SaleItem.objects.select_related('medicine')
+                        .annotate(returned_qty=Coalesce(Sum('return_items__quantity'), 0))
+            ),
+            Prefetch(
+                'returns__items',
+                queryset=ReturnItem.objects.select_related('sale_item')
+            )
         ).annotate(
             item_count=Count('items', distinct=True),
             returned_item_count=Count('items__return_items', distinct=True),
@@ -383,35 +391,39 @@ class SalesListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Get filter parameters
         date_from = self.request.GET.get('date_from', '')
         date_to = self.request.GET.get('date_to', '')
         context['date_from'] = date_from
         context['date_to'] = date_to
-        
-        # Get the already-evaluated queryset from the view
+
+        # Paginated sales for display
         sales = context['sales']
-        
-        # Calculate totals using annotated fields
-        context['total_sales'] = sales.count()
-        context['total_amount'] = sum(
-            sale._net_amount for sale in sales 
-            if not sale.is_fully_returned
+
+        # --- FIX: Get full filtered queryset (without pagination) ---
+        filtered_qs = self.get_queryset()
+
+        # Optimized totals using aggregate (runs single query)
+        totals = filtered_qs.aggregate(
+            total_sales=Count('id'),
+            total_amount=Coalesce(Sum('_net_amount'), Decimal('0.00')),
+            total_profit=Coalesce(Sum('_total_profit'), Decimal('0.00'))
         )
-        context['total_profit'] = sum(
-            sale._total_profit for sale in sales
-        )
-        
+
+        context['total_sales'] = totals['total_sales']
+        context['total_amount'] = totals['total_amount']
+        context['total_profit'] = totals['total_profit']
+
         # Optimize all-time totals calculation
         if date_from or date_to:
-            context['all_time_total_amount'] = Sale.objects.aggregate(
-                total=Sum('_net_amount')
-            )['total'] or Decimal('0.00')
-            context['all_time_total_profit'] = Sale.objects.aggregate(
-                total=Sum('_total_profit')
-            )['total'] or Decimal('0.00')
-        
+            all_time_totals = Sale.objects.aggregate(
+                total_amount=Coalesce(Sum('_net_amount'), Decimal('0.00')),
+                total_profit=Coalesce(Sum('_total_profit'), Decimal('0.00'))
+            )
+            context['all_time_total_amount'] = all_time_totals['total_amount']
+            context['all_time_total_profit'] = all_time_totals['total_profit']
+
         return context
 
 class ReportListView(ListView):

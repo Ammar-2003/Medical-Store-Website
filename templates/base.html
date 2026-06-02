@@ -4,9 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Hanan Medical Store{% endblock %}</title>
+    <title>{% block title %}Medicine Management System{% endblock %}</title>
     <link href="{% static 'css/main.css' %}" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
 <body class="bg-gray-50">
     {% include 'includes/message.html' %}
@@ -24,10 +25,10 @@
                         </div>
                     </div>
                     <div class="">
-<h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-amber-600 bg-clip-text text-transparent">
-    Hanan Medical Store
+<h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+    Medicine Management System
 </h1>
-                        <p class="text-md text-black ml-2">03121683846</p>
+                        <p class="text-md text-black ml-2">Get AI Powered Medicine Suggestions</p>
                     </div>
                 </div>
                 
@@ -100,6 +101,58 @@
         {% block content %}
         {% endblock %}
     </main>
+        <!-- Medicine Suggestion Button (Add before closing body tag) -->
+    <button class="medicine-helper-btn" id="medicineHelperBtn">
+        <i class="fas fa-pills"></i>
+        <span class="btn-text">Suggest Me Medicine</span>
+    </button>
+    
+    <!-- Medicine Suggestion Modal -->
+    <div class="medicine-modal" id="medicineModal">
+        <div class="medicine-modal-content">
+            <div class="medicine-header">
+                <h2><i class="fas fa-stethoscope"></i> AI Medicine Assistant</h2>
+                <p>Describe your symptoms for personalized suggestions</p>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            
+            <div class="medicine-body">
+                <!-- Warning Box -->
+                <div class="warning-box">
+                    <div class="warning-title">
+                        <i class="fas fa-exclamation-triangle"></i> Important Medical Disclaimer
+                    </div>
+                    <p>⚠️ <strong>This is an AI-powered assistant and NOT a replacement for professional medical advice.</strong><br>
+                    AI responses may contain errors. Always consult with a qualified healthcare professional for proper diagnosis and treatment.</p>
+                    <p><strong>In case of emergency, call your local emergency number immediately.</strong></p>
+                </div>
+                
+                <!-- Symptoms Input -->
+                <div class="input-section">
+                    <textarea 
+                        class="symptoms-input" 
+                        id="symptomsInput" 
+                        placeholder="Describe your symptoms in detail. For example: 'I have had a headache and fever for 2 days, along with body aches and mild cough. No known allergies.'"
+                    ></textarea>
+                    
+                    <button class="analyze-btn" id="analyzeBtn">
+                        <i class="fas fa-search"></i> Analyze Symptoms & Get Suggestions
+                    </button>
+                </div>
+                
+                <!-- Loading Spinner -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Analyzing symptoms and preparing recommendations...</p>
+                </div>
+                
+                <!-- Results Section -->
+                <div class="results-section" id="resultsSection">
+                    <!-- Results will be populated here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
 
 <script>
     // Mobile menu toggle (unchanged)
@@ -162,6 +215,653 @@
             setTimeout(() => isScrolling = false, 500);
         });
     });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const medicineBtn = document.getElementById('medicineHelperBtn');
+    const medicineModal = document.getElementById('medicineModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const symptomsInput = document.getElementById('symptomsInput');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const resultsSection = document.getElementById('resultsSection');
+    
+    // Open modal
+    medicineBtn.addEventListener('click', () => {
+        medicineModal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        symptomsInput.focus();
+    });
+    
+    // Close modal
+    closeModalBtn.addEventListener('click', () => {
+        medicineModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    });
+    
+    // Close modal when clicking outside
+    medicineModal.addEventListener('click', (e) => {
+        if (e.target === medicineModal) {
+            medicineModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    });
+    
+    // Close with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && medicineModal.style.display === 'block') {
+            medicineModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    });
+    
+    // Analyze symptoms
+    analyzeBtn.addEventListener('click', async () => {
+        const symptoms = symptomsInput.value.trim();
+        
+        if (!symptoms) {
+            showAlert('Please describe your symptoms before analyzing.', 'warning');
+            return;
+        }
+        
+        if (symptoms.length < 10) {
+            showAlert('Please provide more detailed symptoms (at least 10 characters).', 'warning');
+            return;
+        }
+        
+        // Show loading, hide button and previous results
+        loadingSpinner.style.display = 'flex';
+        analyzeBtn.disabled = true;
+        analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        resultsSection.style.display = 'none';
+        
+        try {
+            // Call real Gemini API through Django backend
+            const suggestions = await getRealAIResponse(symptoms);
+            
+            // Display results
+            displayResults(suggestions);
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert(`Sorry, there was an error: ${error.message}. Please try again.`, 'error');
+            
+            // Show fallback mock data
+            const fallbackData = getFallbackResponse(symptoms);
+            displayResults(fallbackData);
+            
+        } finally {
+            // Hide loading, enable button
+            loadingSpinner.style.display = 'none';
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<i class="fas fa-search"></i> Analyze Symptoms & Get Suggestions';
+        }
+    });
+    
+    // Real AI integration function
+    async function getRealAIResponse(symptoms) {
+        const csrfToken = getCookie('csrftoken');
+        
+        const response = await fetch('/api/analyze-symptoms/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ 
+                symptoms: symptoms,
+                user_agent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+            })
+        });
+        
+        if (!response.ok) {
+            let errorMessage = 'API request failed';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = `Server error: ${response.status}`;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        
+        // Validate response structure: UI now expects medicine suggestions only.
+        if (!data.suggestedMedicines) {
+            console.warn('Invalid response structure:', data);
+            // Return formatted response even if structure is different.
+            return formatAIResponse(data);
+        }
+        
+        return formatAIResponse(data);
+    }
+    
+    // Format AI response to ensure proper structure
+    function formatAIResponse(aiData) {
+        // If AI returns text instead of JSON, parse it
+        if (typeof aiData === 'string') {
+            try {
+                // Try to extract JSON from text
+                const jsonMatch = aiData.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    aiData = JSON.parse(jsonMatch[0]);
+                }
+            } catch (e) {
+                // If parsing fails, create a medicine-only structured response from text
+                return {
+                    suggestedMedicines: [
+                        {
+                            name: "Consult Healthcare Provider",
+                            purpose: "Professional medical guidance",
+                            dosage: "As prescribed",
+                            note: "AI could not safely format medicine suggestions from the response."
+                        }
+                    ],
+                    medicalAdvice: ["Please consult with a doctor for accurate diagnosis and treatment"],
+                    homeRemedies: ["Get adequate rest", "Stay hydrated", "Monitor symptoms"],
+                    warning: aiData.substring(0, 300) + "... [Consult doctor before taking any medicine]",
+                    rawResponse: aiData.substring(0, 500)
+                };
+            }
+        }
+        
+        // Ensure all required fields exist. Condition data is not returned or displayed.
+        return {
+            suggestedMedicines: aiData.suggestedMedicines || [
+                {
+                    name: "See Doctor First",
+                    purpose: "Accurate medicine advice requires proper evaluation",
+                    dosage: "As prescribed",
+                    note: "Always consult a healthcare professional before taking medicine."
+                }
+            ],
+            medicalAdvice: aiData.medicalAdvice || ["Schedule an appointment with your healthcare provider"],
+            homeRemedies: aiData.homeRemedies || ["Rest", "Drink plenty of fluids", "Monitor symptoms"],
+            warning: aiData.warning || "This is AI-generated information. Always consult a qualified healthcare professional before taking any medicine.",
+            rawResponse: aiData.rawResponse || aiData
+        };
+    }
+    
+    // Fallback response if API fails
+    function getFallbackResponse(symptoms) {
+        const commonSymptoms = symptoms.toLowerCase();
+        let medicines = [];
+        
+        if (commonSymptoms.includes('headache') || commonSymptoms.includes('fever')) {
+            medicines = [
+                { name: "Paracetamol (Acetaminophen)", purpose: "For fever and headache", dosage: "500mg every 6 hours", note: "Do not exceed the safe daily limit. Avoid if allergic or if your doctor told you not to use it." },
+                { name: "Ibuprofen", purpose: "For pain and inflammation", dosage: "200-400mg every 6-8 hours", note: "Take with food. Avoid with stomach ulcers, kidney disease, blood thinners, or pregnancy unless a doctor allows it." }
+            ];
+        } else if (commonSymptoms.includes('cough') || commonSymptoms.includes('cold')) {
+            medicines = [
+                { name: "Dextromethorphan", purpose: "For dry cough suppression", dosage: "As directed on the product label", note: "Not for persistent cough, breathing difficulty, or cough with serious symptoms. Ask a pharmacist/doctor first." },
+                { name: "Loratadine", purpose: "For allergy-related runny nose or sneezing", dosage: "10mg once daily", note: "Use only if suitable for you. Check interactions and allergies." }
+            ];
+        } else {
+            medicines = [
+                { name: "Consult Healthcare Provider", purpose: "Safe medicine selection", dosage: "As prescribed", note: "Your symptoms need proper evaluation before medicine can be suggested safely." }
+            ];
+        }
+        
+        return {
+            suggestedMedicines: medicines,
+            medicalAdvice: [
+                "Get plenty of rest and stay hydrated",
+                "Monitor your symptoms regularly",
+                "Keep a symptom diary if symptoms persist",
+                "Avoid contact with others if infectious"
+            ],
+            homeRemedies: [
+                "Drink warm fluids like herbal tea",
+                "Use a humidifier for dry air",
+                "Gargle with salt water for throat irritation",
+                "Apply warm/cold compress as needed"
+            ],
+            warning: "⚠️ API Connection Issue - This is fallback information. For accurate medical advice, please consult a healthcare professional. If symptoms worsen or you experience difficulty breathing, chest pain, or high fever, seek emergency care immediately.",
+            isFallback: true
+        };
+    }
+    
+    // Display results function
+    function displayResults(data) {
+        const isFallback = data.isFallback || false;
+        
+        resultsSection.innerHTML = `
+            ${isFallback ? `
+                <div class="warning-box" style="background-color: #fff3cd; border-color: #ffeaa7;">
+                    <div class="warning-title" style="color: #856404;">
+                        <i class="fas fa-exclamation-triangle"></i> Using Fallback Data
+                    </div>
+                    <p style="color: #856404;">Unable to connect to AI service. Showing general information. Please consult a doctor for accurate advice.</p>
+                </div>
+            ` : ''}
+            <!-- Suggested Medicines -->
+            <div class="result-card">
+                <div class="result-title">
+                    <i class="fas fa-capsules"></i> Suggested Medicines
+                    <span class="disclaimer-badge">Consult Doctor</span>
+                </div>
+                <p class="medical-disclaimer">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    <strong>Important:</strong> These are common over-the-counter suggestions. Always consult a doctor before taking any medication. Follow recommended dosages and check for allergies.
+                </p>
+                <ul class="medicine-list">
+                    ${(data.suggestedMedicines || []).map(med => `
+                        <li class="medicine-item">
+                            <div class="medicine-content">
+                                <div class="medicine-header">
+                                    <span class="medicine-name">${med.name || 'Medicine'}</span>
+                                    <span class="medicine-purpose-badge">${med.purpose || 'Symptom relief'}</span>
+                                </div>
+                                <div class="medicine-details">
+                                    <div class="dosage-info">
+                                        <i class="fas fa-prescription-bottle-alt"></i>
+                                        <strong>Typical Dosage:</strong> ${med.dosage || 'As directed by doctor'}
+                                    </div>
+                                    ${med.note ? `
+                                        <div class="medicine-note">
+                                            <i class="fas fa-info-circle"></i> ${med.note}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            
+            <!-- Medical Advice -->
+            <div class="result-card">
+                <div class="result-title">
+                    <i class="fas fa-user-md"></i> Medical Advice
+                </div>
+                <ul class="advice-list">
+                    ${(data.medicalAdvice || []).map(advice => `
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>${advice}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            
+            <!-- Home Remedies -->
+            <div class="result-card">
+                <div class="result-title">
+                    <i class="fas fa-home"></i> Home Remedies & Self-Care
+                </div>
+                <ul class="remedies-list">
+                    ${(data.homeRemedies || []).map(remedy => `
+                        <li>
+                            <i class="fas fa-leaf"></i>
+                            <span>${remedy}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            
+            <!-- Final Warning -->
+            <div class="warning-box final-warning">
+                <div class="warning-title">
+                    <i class="fas fa-exclamation-circle"></i> Important Medical Reminder
+                </div>
+                <p>${data.warning || 'This is AI-generated information. AI can make mistakes. For accurate diagnosis and treatment, please consult a healthcare professional.'}</p>
+                <div class="emergency-info">
+                    <h4><i class="fas fa-ambulance"></i> When to Seek Emergency Care:</h4>
+                    <ul>
+                        <li>Difficulty breathing or shortness of breath</li>
+                        <li>Chest pain or pressure</li>
+                        <li>Sudden dizziness, confusion, or severe headache</li>
+                        <li>High fever (above 103°F/39.4°C) not responding to medication</li>
+                        <li>Severe vomiting or inability to keep fluids down</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="action-footer">
+                <div class="footer-content">
+                    <div class="footer-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <div class="footer-text">
+                        <p><strong>Your Health Matters!</strong></p>
+                        <p>Consider this information as preliminary guidance only. Always prioritize professional medical consultation.</p>
+                    </div>
+                </div>
+                <div class="footer-actions">
+                    <button class="btn-print" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print Recommendations
+                    </button>
+                    <button class="btn-clear" onclick="clearSymptoms()">
+                        <i class="fas fa-redo"></i> New Analysis
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        resultsSection.style.display = 'block';
+        
+        // Scroll to results smoothly
+        setTimeout(() => {
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+        
+        // Add event listener for clear button
+        const clearButton = resultsSection.querySelector('.btn-clear');
+        if (clearButton) {
+            clearButton.addEventListener('click', clearSymptoms);
+        }
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Show alert function
+    function showAlert(message, type = 'info') {
+        // Remove existing alerts
+        const existingAlert = document.querySelector('.custom-alert');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+        
+        const alert = document.createElement('div');
+        alert.className = `custom-alert alert-${type}`;
+        alert.innerHTML = `
+            <div class="alert-content">
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+                <button class="alert-close">&times;</button>
+            </div>
+        `;
+        
+        document.body.appendChild(alert);
+        
+        // Show alert
+        setTimeout(() => {
+            alert.classList.add('show');
+        }, 10);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            alert.classList.remove('show');
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 300);
+        }, 5000);
+        
+        // Close button
+        alert.querySelector('.alert-close').addEventListener('click', () => {
+            alert.classList.remove('show');
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 300);
+        });
+    }
+    
+    // Clear symptoms function
+    function clearSymptoms() {
+        symptomsInput.value = '';
+        resultsSection.style.display = 'none';
+        symptomsInput.focus();
+        showAlert('Ready for new symptom analysis. Describe your symptoms above.', 'info');
+    }
+    
+    // Allow Enter key to trigger analysis (with Shift+Enter for new line)
+    symptomsInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            analyzeBtn.click();
+        }
+    });
+    
+    // Add CSS for new elements
+    const style = document.createElement('style');
+    style.textContent = `
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .custom-alert.show {
+            transform: translateX(0);
+        }
+        
+        .custom-alert.alert-error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .custom-alert.alert-warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .custom-alert.alert-success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .alert-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: auto;
+            color: #666;
+        }
+        
+        .alert-close:hover {
+            color: #000;
+        }
+        
+        .disclaimer-badge {
+            background: #dc3545;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+            font-weight: normal;
+        }
+        
+        .medicine-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .medicine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .medicine-purpose-badge {
+            background: #6f42c1;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        
+        .dosage-info {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 8px 0;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .medicine-note {
+            background: #fff3cd;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #856404;
+            margin-left: 10px;
+        }
+        
+        .advice-list li, .remedies-list li {
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .advice-list i, .remedies-list i {
+            color: #28a745;
+            margin-top: 3px;
+        }
+        
+        .final-warning {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+        }
+        
+        .emergency-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .emergency-info h4 {
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+        
+        .emergency-info ul {
+            padding-left: 20px;
+        }
+        
+        .emergency-info li {
+            margin-bottom: 5px;
+        }
+        
+        .action-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f8ff;
+            border-radius: 10px;
+        }
+        
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .footer-icon {
+            font-size: 24px;
+            color: #007bff;
+        }
+        
+        .footer-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .btn-print, .btn-clear {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-print {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-clear {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .medical-disclaimer {
+            background: #e7f1ff;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 15px;
+        }
+        
+        .loading-spinner {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+});
 </script>
 </body>
 </html>

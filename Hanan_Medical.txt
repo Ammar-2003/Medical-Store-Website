@@ -1,0 +1,5 @@
+@echo off
+cd /d "C:\Users\ansju\Desktop\Hanan_Medical_Store_System"
+call venv\Scripts\activate.bat
+python manage.py runserver
+pause

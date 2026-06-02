@@ -24,10 +24,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('app.home.urls')),
     path('medicine/', include('app.medicine.urls')),
+    path('api/', include('app.suggestions.urls')),
     path('sales/', include('app.sales.urls', namespace='sales')),
     path('', RedirectView.as_view(url='/', permanent=True))
 ]
-
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
