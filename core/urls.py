@@ -28,8 +28,4 @@ urlpatterns = [
     path('sales/', include('app.sales.urls', namespace='sales')),
     path('', RedirectView.as_view(url='/', permanent=True))
 ]
-if settings.DEBUG:
-    import debug_toolbar
-    urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)),
-    ] + urlpatterns
+
