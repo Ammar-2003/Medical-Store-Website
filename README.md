@@ -93,4 +93,3 @@ https://medical-store-website.onrender.com/
 The AI-powered suggestion feature is designed only to provide basic medicine suggestions based on symptoms. It is not a replacement for professional medical advice, diagnosis, or treatment. Users should always consult a qualified doctor or pharmacist before using any medicine.
 
 Project: **Medicine Management System with AI-Powered Suggestions**
-Supervisor: **Dr Nadia Khan**
